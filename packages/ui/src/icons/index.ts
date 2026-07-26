@@ -1,5 +1,6 @@
 export {
   ArrowRight,
+  Camera,
   Check,
   ChevronDown,
   CircleHelp,
@@ -14,7 +15,10 @@ export {
   Palette,
   PanelRight,
   RotateCcw,
+  ShieldAlert,
   Shapes,
+  StepForward,
   Sun,
+  TimerReset,
   X,
 } from "lucide-react";

@@ -38,6 +38,11 @@ function InspectorContent() {
           Review World Document v1
         </Link>
       </p>
+      <p>
+        <Link className="app-inline-link" to="/engine">
+          Open Engine Playground
+        </Link>
+      </p>
       <Separator />
       <dl>
         <div>
@@ -69,6 +74,11 @@ export default function WorkspacePage() {
           <p>
             A responsive, static frame for future work. No world, editor, rules, or canvas engine
             exists in this milestone.
+          </p>
+          <p>
+            <Link className="app-inline-link" to="/engine">
+              Open Engine Playground
+            </Link>
           </p>
         </div>
         <Dialog
@@ -119,6 +129,7 @@ export default function WorkspacePage() {
           <StatusIndicator status="idle" label="Static shell" />
           <span>No world document loaded</span>
           <span>Format: axiom-garden/world v1</span>
+          <span>Engine core available · No rule system</span>
           <span className="workspace-status__readonly">
             <Info aria-hidden="true" />
             Read-only preview

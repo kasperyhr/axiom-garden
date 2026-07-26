@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173",
-    "build": "vite build",
+    "build": "vite build --configLoader runner",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --configLoader runner",
     "clean": "rimraf dist coverage"
   },
   "dependencies": {
     "@axiom-garden/domain": "workspace:*",
+    "@axiom-garden/engine": "workspace:*",
     "@axiom-garden/protocol": "workspace:*",
     "@axiom-garden/ui": "workspace:*",
     "@tailwindcss/vite": "4.3.3",

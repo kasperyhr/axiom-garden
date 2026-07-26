@@ -10,6 +10,8 @@ if (!project || !allowedProjects.has(project)) {
 }
 
 const root = process.cwd();
+const testPort = "4173";
+const testOrigin = `http://127.0.0.1:${testPort}`;
 const viteEntry = path.join(root, "apps", "web", "node_modules", "vite", "bin", "vite.js");
 const playwrightEntry = path.join(root, "node_modules", "@playwright", "test", "cli.js");
 
@@ -20,10 +22,12 @@ const vite = spawn(
     "apps/web",
     "--config",
     "apps/web/vite.config.ts",
+    "--configLoader",
+    "runner",
     "--host",
     "127.0.0.1",
     "--port",
-    "5173",
+    testPort,
     "--strictPort",
   ],
   { cwd: root, stdio: "inherit" },
@@ -36,7 +40,7 @@ async function waitForWeb() {
       throw new Error(`Vite exited before becoming ready (${vite.exitCode})`);
     }
     try {
-      const response = await fetch("http://127.0.0.1:5173");
+      const response = await fetch(testOrigin);
       if (response.ok) return;
     } catch {
       // The local server is still starting.
@@ -56,6 +60,7 @@ try {
   await waitForWeb();
   const playwright = spawn(process.execPath, [playwrightEntry, "test", `--project=${project}`], {
     cwd: root,
+    env: { ...process.env, AXIOM_GARDEN_TEST_ORIGIN: testOrigin },
     stdio: "inherit",
   });
   process.exitCode = await waitForExit(playwright);

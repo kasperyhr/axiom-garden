@@ -6,6 +6,14 @@ import {
   REPRESENTATIVE_WORLD_V1,
   serializeWorldDocument,
 } from "../packages/domain/src";
+import {
+  computeSimulationDigest,
+  createInitialSimulationState,
+  createSimulationSnapshot,
+  restoreSimulationSnapshot,
+  stepSimulation,
+  TransitionPlanSchema,
+} from "../packages/engine/src";
 import { app } from "../apps/worker/src/app";
 
 test.beforeEach(async ({ page }) => {
@@ -27,6 +35,7 @@ test("critical routes exist in the built application shell", async ({ page }) =>
     ["/workspace", "Workspace shell preview"],
     ["/components", "Design system"],
     ["/world-format", "World Document v1"],
+    ["/engine", "Engine Playground"],
     ["/missing", "Page not found"],
   ] as const) {
     await page.goto(path);
@@ -42,6 +51,47 @@ test("World Document fixtures and canonical serialization remain valid", () => {
     expect(serializeWorldDocument(parsed.data)).toBe(canonical);
   }
   expect(parseWorldJson('{"format":"axiom-garden/world","schemaVersion":2}').success).toBe(false);
+});
+
+test("Engine initial state, atomic step, digest, and snapshot remain deterministic", () => {
+  const left = createInitialSimulationState(REPRESENTATIVE_WORLD_V1);
+  const right = createInitialSimulationState(REPRESENTATIVE_WORLD_V1);
+  expect(left.success).toBe(true);
+  expect(right.success).toBe(true);
+  if (!left.success || !right.success) return;
+  expect(computeSimulationDigest(left.data)).toBe(computeSimulationDigest(right.data));
+
+  const noOp = TransitionPlanSchema.parse({
+    id: "transition:smoke-no-op",
+    expectedTick: 0,
+    operations: [],
+  });
+  const stepped = stepSimulation(left.data, noOp);
+  expect(stepped.success).toBe(true);
+  if (!stepped.success) return;
+  expect(stepped.state.tick).toBe(1);
+
+  const invalid = TransitionPlanSchema.parse({
+    id: "transition:smoke-invalid",
+    expectedTick: 0,
+    operations: [
+      {
+        kind: "removeEntity",
+        operationId: "operation:missing",
+        entityId: "entity:missing",
+      },
+    ],
+  });
+  const digestBefore = computeSimulationDigest(left.data);
+  expect(stepSimulation(left.data, invalid).success).toBe(false);
+  expect(computeSimulationDigest(left.data)).toBe(digestBefore);
+
+  const snapshot = createSimulationSnapshot(stepped.state);
+  const restored = restoreSimulationSnapshot(JSON.parse(JSON.stringify(snapshot)));
+  expect(restored.success).toBe(true);
+  if (restored.success) {
+    expect(computeSimulationDigest(restored.data)).toBe(snapshot.digest);
+  }
 });
 
 test("Worker health remains compatible with the shared schema", async () => {

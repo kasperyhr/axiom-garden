@@ -16,6 +16,7 @@ import {
   useToast,
 } from "@axiom-garden/ui";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { usePageMetadata } from "../hooks/usePageMetadata";
 
@@ -92,6 +93,14 @@ export default function WorldFormatPage() {
       <Callout title="Untrusted input stays data" tone="info">
         JSON is size-checked, parsed, schema-validated, and checked for references and coordinates.
         It is never executed or sent over the network.
+        <span>
+          {" "}
+          Continue with the built-in representative world in the{" "}
+          <Link className="app-inline-link" to="/engine">
+            Engine Playground
+          </Link>
+          .
+        </span>
       </Callout>
 
       <div className="world-format-layout">

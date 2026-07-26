@@ -2,7 +2,7 @@
 
 > A visual laboratory for building, simulating, explaining, and remixing rule-driven puzzle worlds.
 
-Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台。当前仓库完成 **Milestone 3：领域模型与版本化格式**，提供严格、可验证、可规范序列化的 World Document v1，以及只读验证实验室；尚未实现编辑器、规则语言、模拟器或持久化。
+Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台。当前仓库完成 **Milestone 4：确定性模拟器最小内核**，提供严格的 World Document v1、纯 TypeScript Engine、原子 TransitionPlan 与只读实验页面；尚未实现规则系统、网格渲染器、编辑器或持久化。
 
 ## 当前可用页面
 
@@ -10,6 +10,7 @@ Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台�
 - `/workspace`：静态 App Shell 布局预览，不包含 Canvas 引擎或产品数据。
 - `/components`：项目内设计系统展示与人工验收入口，生产构建保留，便于无独立 Storybook 的审阅。
 - `/world-format`：World Document v1 JSON 的只读验证与 canonical output 实验室。
+- `/engine`：使用内置 world 和预计算纯数据计划的确定性 Engine Playground。
 - `*`：安全、可恢复的 Not Found 页面。
 - `/api/health`：本地 Worker 健康检查，由 Vite proxy 转发。
 
@@ -25,6 +26,7 @@ Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台�
 - React 19、React Router、Vite、Tailwind CSS 4
 - 独立 `@axiom-garden/ui` package、语义 CSS Custom Properties
 - 独立、无框架依赖的 `@axiom-garden/domain` package、strict Zod schema、JSON Schema
+- 独立、无框架依赖的 `@axiom-garden/engine` package、确定性状态、原子 transition、稳定 digest
 - Radix UI headless primitives、Lucide React 图标
 - Cloudflare Workers、Hono、Zod
 - Vitest、React Testing Library、Playwright、axe-core
@@ -38,6 +40,7 @@ apps/
   worker/              Hono Cloudflare Worker
 packages/
   domain/              World Document v1、validation、migration、canonical JSON
+  engine/              SimulationState、TransitionPlan、snapshot、digest
   ui/                  token、主题、通用组件与 UI 单元测试
   protocol/            Web/Worker 共享 Zod 契约
   config-eslint/       共享 ESLint 配置
@@ -103,6 +106,8 @@ pnpm format:check
 pnpm typecheck
 pnpm test
 pnpm test:domain
+pnpm test:engine
+pnpm benchmark:engine
 pnpm build
 pnpm test:ui
 pnpm test:e2e
@@ -112,10 +117,12 @@ pnpm schema:check
 pnpm schema:generate
 ```
 
-- `test`：Domain、Protocol、Worker、UI、Web unit/integration tests；Domain 内含 property-based、prototype pollution 与 schema drift。
-- `test:e2e`：导航、健康状态、移动 Inspector、主题、Help Dialog、404 与水平溢出。
-- `test:a11y`：对 Home、Workspace、Components、Not Found 及打开 Dialog 的状态执行完整 axe 扫描。
-- `test:smoke`：先构建 Web/Worker，再验证关键路由与 Worker/Protocol 契约。
+- `test`：Domain、Engine、Protocol、Worker、UI、Web tests；包含 property、prototype、determinism、immutability、atomicity 与 schema drift。
+- `test:engine`：Engine correctness、determinism、hash golden vectors、snapshot 与 property tests。
+- `benchmark:engine`：本地宽松性能预算，覆盖 initial state、100 ticks、约 1000 operations 与 digest；不作为 CI 的硬毫秒基准。
+- `test:e2e`：导航、World Format、Engine controls/snapshot、健康状态、主题、404 与水平溢出。
+- `test:a11y`：包含 Engine 初始、receipt 和 issue 状态的完整 axe 扫描。
+- `test:smoke`：构建后验证关键路由、Worker/Protocol、Domain schema 与 Engine 确定性契约。
 - `schema:check`：确认生成的 JSON Schema 与已提交文件字节一致。
 - `schema:generate`：从 Zod 单一来源重新生成 `packages/domain/schema/axiom-garden-world-v1.schema.json`。
 - Playwright 失败时写入被 `.gitignore` 排除的 `test-results/` 与 `playwright-report/`；CI 只在失败时上传诊断 artifact。
@@ -168,21 +175,44 @@ if (result.success) {
 
 解析会先检查 2 MiB UTF-8 字节上限，再依次完成 JSON、strict schema、引用/坐标语义验证与安全规范化。完整规范见 [docs/formats/WORLD_V1.md](docs/formats/WORLD_V1.md)。
 
-## Milestone 3 范围
+## Deterministic Engine v1
+
+`@axiom-garden/engine` 从经过 Domain 验证的 `WorldDocumentV1` 创建 tick 0 的 immutable canonical state。Engine 只接收 runtime-validated 的纯数据 `TransitionPlan`：
+
+```ts
+import {
+  createInitialSimulationState,
+  stepSimulation,
+  TransitionPlanSchema,
+} from "@axiom-garden/engine";
+
+const initial = createInitialSimulationState(world);
+if (initial.success) {
+  const noOp = TransitionPlanSchema.parse({
+    id: "transition:example",
+    expectedTick: 0,
+    operations: [],
+  });
+  const next = stepSimulation(initial.data, noOp);
+}
+```
+
+空 plan 是合法 no-op tick。完整契约见 [docs/engine/ENGINE_V1.md](docs/engine/ENGINE_V1.md)。TransitionPlan 是未来规则求值之后的低层提交格式，不是 Rule、Condition、Action DSL 或用户文件。
+
+## Milestone 4 范围
 
 已完成：
 
-- `@axiom-garden/domain`、WorldDocumentV1、branded ID 与受限 properties
-- strict Zod schema、生成的 JSON Schema、分层 validation、结构化 issue
-- normalization、canonical serialization、version detection 与 migration registry
-- 示例/无效 fixtures、unit/property/prototype/round-trip/schema drift tests
-- lazy-loaded World Format Lab、E2E、axe、smoke 与 CI 覆盖
+- `@axiom-garden/engine`、SimulationStateV1、canonical ordering 与 selectors
+- 预计算纯数据 TransitionPlan、顺序预演、原子提交、receipt 与有界多步执行
+- snapshot/restore、clone/comparison 与 `ag1:` 稳定非密码学 digest
+- unit/property/determinism/immutability/atomicity/golden/benchmark tests
+- lazy-loaded Engine Playground、E2E、axe、smoke 与 CI 覆盖
 
 明确未实现：
 
-- Milestone 4 的模拟 tick、状态步进、Engine package 与执行轨迹
 - Rule、Condition、Action、DSL、AST 与冲突解析
-- 网格渲染、Canvas 编辑、拖拽、缩放、Undo/Redo
+- Milestone 5 的基础网格渲染器，以及 Canvas 编辑、拖拽、缩放、Undo/Redo
 - 时间轴、重放、求解器、谜题
 - 本地作品库、账户、登录、数据库、上传、分享、协作
 - DeepSeek 或其他 LLM、遥测、付费服务、正式部署

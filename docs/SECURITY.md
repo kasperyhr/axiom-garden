@@ -35,6 +35,17 @@ Wasm、shell、宏展开到宿主语言、任意 URL fetch 或系统调用。规
 
 World Format Lab 只接收粘贴到 textarea 的 JSON 文本；不使用 `eval`、`Function`、动态用户路径 import、`dangerouslySetInnerHTML`、URL/CSS 注入、文件上传、网络请求、localStorage world 或 IndexedDB。
 
+### Engine v1
+
+- TransitionPlan 是 strict runtime-validated 的纯数据；拒绝 callback、function、循环引用、class instance、源码字符串和自定义 executable handler。
+- 每个 plan 最多 4096 operations；run 最多 10000 steps；tick 最大 1000000。Engine entity/cell 上限分别为 4096/2048，不超过 Domain 上限。
+- 所有 operation 在临时状态中按数组顺序预演。任一失败则拒绝整份 plan，原状态、tick 和 digest 不变。
+- snapshot restore 会重新验证 SimulationState，并比较已记录 digest；不匹配返回结构化 issue。
+- `ag1:` digest 是 FNV-1a 64-bit 一致性标识，不是密码学哈希、签名、MAC 或认证凭据。
+- Canonical state 不保存 Map/Set；derived index 可从 canonical arrays 重建，不进入 digest。
+- Engine 不读取系统时间、随机数、网络、文件、环境变量、DOM 或持久化存储。
+- Engine Playground 只使用内置 world 和内置 transition data；不接受 operation、代码或文件输入。
+
 ## 依赖风险
 
 - 使用固定版本和提交的 `pnpm-lock.yaml`。

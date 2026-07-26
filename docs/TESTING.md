@@ -11,7 +11,7 @@
 - **Property-based test**：未来用生成输入验证广泛不变量。
 - **Deterministic replay test**：未来验证相同版本、输入与种子产生完全一致轨迹。
 
-## Milestone 3 已完成
+## Milestone 4 已完成
 
 ### Unit 与 integration
 
@@ -24,10 +24,16 @@
 - Domain serialization/migration：字段和集合顺序、LF、round trip、版本识别与无虚构 v0。
 - Domain security：UTF-8 byte 上限、dangerous key 与 prototype pollution。
 - World Format Lab：默认有效、syntax issue、reset、canonical output 与 clipboard。
+- Engine initial state：tick 0、防御性复制、canonical ordering、无效 world 与 selectors。
+- Engine transition：六类 operation、顺序 staged semantics、空 no-op、原子失败、tick/operation/entity/cell 限制。
+- Engine snapshot/digest：create/restore、tamper、clone、comparison、JSON round trip 与 golden vectors。
+- Engine Playground：step、demonstration transition、run 10、reset、snapshot restore 与 tamper issue。
 
 ### Property-based 与 schema drift
 
 `fast-check` 使用有限规模生成器验证 coordinate key 稳定、tags/properties normalization 幂等、canonical serialization 幂等，以及 validate/serialize 不修改输入。测试不生成无界文档。
+
+Engine property tests 验证 state canonicalization、clone、snapshot round-trip、no-op stepping、atomic failure 与 selectors 的不变性。Determinism tests 固定相同 world、Engine、plan sequence 必须产生相同 state、receipt、issue order、digest 和 final state。
 
 JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结果与已提交 schema 逐字节比较。Representative fixture 同时参与 runtime schema、semantic validation、canonical round-trip 和 smoke。
 
@@ -42,6 +48,7 @@ JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结�
 - Help Dialog 与 Escape
 - Components
 - World Format Lab：valid、invalid syntax、out-of-bounds、reset、canonical clipboard
+- Engine Playground：no-op、run 10、demonstration transition、reset、snapshot restore、tamper rejection、Workspace 入口
 - 404 返回 Home
 - 1440、390、360 宽度无水平溢出
 
@@ -49,7 +56,7 @@ JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结�
 
 ### Accessibility
 
-`pnpm test:a11y` 对 Home、Workspace、Components、World Format Lab、Not Found 和打开 Dialog 状态运行完整 axe 扫描。测试不关闭严重规则；失败输出规则 ID、目标和摘要。
+`pnpm test:a11y` 对 Home、Workspace、Components、World Format Lab、Engine Playground、Not Found、打开 Dialog、Engine receipt 和 Engine issue 状态运行完整 axe 扫描。测试不关闭严重规则；失败输出规则 ID、目标和摘要。
 
 ### Smoke
 
@@ -58,6 +65,11 @@ JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结�
 - Home、Workspace、Components、Not Found 路由存在
 - Worker 应用的 `/api/health` 响应通过共享 `HealthResponseSchema`
 - World Format 路由存在、representative world 通过、未来版本被拒绝、canonical round-trip 稳定
+- Engine 可导入、initial state/digest 稳定、no-op tick、atomic failure 与 snapshot round-trip
+
+## Engine 性能策略
+
+`pnpm benchmark:engine` 使用宽松 30 秒安全预算完成 representative initial state、100 个 no-op ticks、约 1000 个顺序 operation 和 digest。它用于发现意外指数复杂度，不作为默认 CI 的短毫秒性能断言；CI 始终执行全部 Engine correctness 与 determinism tests。
 
 ## 浏览器测试编排
 
@@ -75,6 +87,8 @@ pnpm format:check
 pnpm typecheck
 pnpm test
 pnpm test:domain
+pnpm test:engine
+pnpm benchmark:engine
 pnpm schema:check
 pnpm build
 pnpm test:e2e
@@ -82,4 +96,4 @@ pnpm test:a11y
 pnpm test:smoke
 ```
 
-不得通过删除、跳过或弱化测试修复失败。Domain property-based tests 已在 Milestone 3 引入；deterministic replay 必须等待对应后续 Milestone 的 Engine，不得在此伪造。
+不得通过删除、跳过或弱化测试修复失败。Milestone 4 只验证相同输入与 plan sequence 的确定性执行，不保存完整 replay 历史；完整重放属于 Milestone 14。

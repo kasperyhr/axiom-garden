@@ -54,7 +54,7 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit, domain property, and schema drift tests
+      - name: Unit, domain/engine property, determinism, and schema drift tests
         run: pnpm test
 
       - name: Build

@@ -25,6 +25,7 @@ function areaTitle(pathname: string): string {
   if (pathname === "/workspace") return "Workspace";
   if (pathname === "/components") return "Components";
   if (pathname === "/world-format") return "World format v1";
+  if (pathname === "/engine") return "Engine playground";
   return "Page not found";
 }
 
@@ -75,15 +76,18 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             description="A local guide to the current product shell."
           >
             <p>
-              Milestone 3 defines the strict, versioned World Document v1 format and a local
-              validation laboratory.
+              Milestone 4 adds a deterministic simulation core driven only by precomputed, pure-data
+              transition plans.
             </p>
             <p>
-              Simulation, rules, editing, file upload, persistence, and grid rendering remain
-              intentionally unavailable.
+              Rules, automatic transition generation, editing, file upload, persistence, and grid
+              rendering remain intentionally unavailable.
             </p>
             <NavLink className="app-link app-link--secondary" to="/world-format">
               Open World Format Lab
+            </NavLink>
+            <NavLink className="app-link app-link--secondary" to="/engine">
+              Open Engine Playground
             </NavLink>
           </Dialog>
         </div>

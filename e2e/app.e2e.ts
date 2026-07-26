@@ -104,6 +104,51 @@ test("World Format Lab has no horizontal overflow on mobile", async ({ page }) =
   expect(overflow).toBeLessThanOrEqual(1);
 });
 
+test("steps and resets the deterministic Engine Playground", async ({ page }) => {
+  await page.goto("/engine");
+  await expect(page).toHaveTitle("Engine playground | Axiom Garden");
+  const tick = page.getByTestId("engine-tick");
+  const digest = page.getByTestId("engine-digest");
+  await expect(tick).toHaveText("0");
+  const initialDigest = await digest.textContent();
+
+  await page.getByRole("button", { name: "No-op step" }).click();
+  await expect(tick).toHaveText("1");
+  await page.getByRole("button", { name: "Run 10 no-op ticks" }).click();
+  await expect(tick).toHaveText("11");
+  await page.getByRole("button", { name: "Apply demonstration transition" }).click();
+  await expect(tick).toHaveText("12");
+  expect(await digest.textContent()).not.toBe(initialDigest);
+
+  await page.getByRole("button", { name: "Reset" }).click();
+  await expect(tick).toHaveText("0");
+  await expect(digest).toHaveText(initialDigest ?? "");
+});
+
+test("verifies and rejects Engine snapshot states", async ({ page }) => {
+  await page.goto("/engine");
+  const tick = page.getByTestId("engine-tick");
+  await page.getByRole("button", { name: "Create snapshot" }).click();
+  await page.getByRole("button", { name: "No-op step" }).click();
+  await expect(tick).toHaveText("1");
+  await page.getByRole("button", { name: "Restore snapshot" }).click();
+  await expect(tick).toHaveText("0");
+  await page.getByRole("button", { name: "Tamper snapshot demo" }).click();
+  await expect(page.getByText("snapshot_digest_mismatch")).toBeVisible();
+});
+
+test("opens Engine from Workspace and has no mobile overflow", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/workspace");
+  await page.getByRole("link", { name: "Open Engine Playground" }).first().click();
+  await expect(page).toHaveURL(/\/engine$/u);
+  await expect(page.getByRole("heading", { name: "Engine Playground" })).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
 for (const viewport of [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },

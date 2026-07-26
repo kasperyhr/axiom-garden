@@ -112,6 +112,44 @@ describe("Axiom Garden app shell", () => {
     expect(writeText).toHaveBeenCalledOnce();
   });
 
+  it("runs the deterministic Engine Playground controls and snapshot integrity flow", async () => {
+    const user = userEvent.setup();
+    renderApp("/engine");
+    expect(
+      await screen.findByRole("heading", { name: "Engine Playground" }, { timeout: 5_000 }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        "This playground applies precomputed transition data. No rule language is implemented.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByTestId("engine-tick")).toHaveTextContent("0");
+    await waitFor(() => {
+      expect(document.title).toBe("Engine playground | Axiom Garden");
+    });
+
+    await user.click(screen.getByRole("button", { name: "No-op step" }));
+    expect(screen.getByTestId("engine-tick")).toHaveTextContent("1");
+    await user.click(screen.getByRole("button", { name: "Run 10 no-op ticks" }));
+    expect(screen.getByTestId("engine-tick")).toHaveTextContent("11");
+
+    const digestBefore = screen.getByTestId("engine-digest").textContent;
+    await user.click(screen.getByRole("button", { name: "Apply demonstration transition" }));
+    expect(screen.getByTestId("engine-digest").textContent).not.toBe(digestBefore);
+    expect(screen.getByText("transition:demonstration")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Create snapshot" }));
+    await user.click(screen.getByRole("button", { name: "No-op step" }));
+    expect(screen.getByTestId("engine-tick")).toHaveTextContent("13");
+    await user.click(screen.getByRole("button", { name: "Restore snapshot" }));
+    expect(screen.getByTestId("engine-tick")).toHaveTextContent("12");
+
+    await user.click(screen.getByRole("button", { name: "Tamper snapshot demo" }));
+    expect(screen.getByText("snapshot_digest_mismatch")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByTestId("engine-tick")).toHaveTextContent("0");
+  });
+
   it("renders Not Found and returns to Home", async () => {
     pendingHealth();
     const user = userEvent.setup();
