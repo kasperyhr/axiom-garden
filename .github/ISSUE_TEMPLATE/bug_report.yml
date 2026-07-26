@@ -1,0 +1,41 @@
+name: Bug report
+description: 报告当前 Milestone 范围内可复现的问题
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: 安全漏洞请使用 GitHub Security 私密报告，不要公开提交。
+  - type: input
+    id: milestone
+    attributes:
+      label: Milestone
+      placeholder: "1"
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: Node、pnpm、操作系统和浏览器版本
+    validations:
+      required: true

@@ -1,0 +1,26 @@
+{
+  "name": "@axiom-garden/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler dev --port 8787",
+    "build": "cross-env WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler deploy --dry-run --outdir dist",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "clean": "rimraf dist coverage .wrangler"
+  },
+  "dependencies": {
+    "@axiom-garden/protocol": "workspace:*",
+    "hono": "4.12.32"
+  },
+  "devDependencies": {
+    "@axiom-garden/config-typescript": "workspace:*",
+    "@cloudflare/workers-types": "5.20260726.1",
+    "cross-env": "10.1.0",
+    "rimraf": "6.0.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10",
+    "wrangler": "4.114.0"
+  }
+}
