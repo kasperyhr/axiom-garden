@@ -1,21 +1,22 @@
+import { StatusIndicator, type Status } from "@axiom-garden/ui";
 import { useEffect, useState } from "react";
 
 import { fetchHealth } from "../api/health";
 
-type HealthState = "loading" | "healthy" | "unavailable";
+type HealthState = Extract<Status, "loading" | "healthy" | "unavailable">;
 
-const statusCopy: Record<HealthState, { label: string; detail: string }> = {
+const statusCopy: Record<HealthState, { readonly label: string; readonly detail: string }> = {
   loading: {
-    label: "Checking connection…",
-    detail: "正在检查连接",
+    label: "Checking connection",
+    detail: "正在检查本地 Worker",
   },
   healthy: {
-    label: "Healthy",
-    detail: "服务运行正常",
+    label: "Worker healthy",
+    detail: "共享契约验证通过",
   },
   unavailable: {
-    label: "Unavailable",
-    detail: "服务暂时不可用",
+    label: "Worker unavailable",
+    detail: "可单独启动本地 Worker 后重试",
   },
 };
 
@@ -43,19 +44,13 @@ export function HealthIndicator() {
   const copy = statusCopy[state];
 
   return (
-    <section className="health" aria-labelledby="worker-status-heading">
-      <div className="health__mark" data-state={state} aria-hidden="true">
-        <span />
-      </div>
-      <div className="health__heading">
+    <section className="health-panel" aria-labelledby="worker-status-heading">
+      <div>
+        <p className="eyebrow">Local service</p>
         <h2 id="worker-status-heading">Worker status</h2>
-        <p>边缘服务状态</p>
       </div>
-      <div className="health__divider" aria-hidden="true" />
-      <div className="health__reading" role="status" aria-live="polite">
-        <strong>{copy.label}</strong>
-        <span>{copy.detail}</span>
-      </div>
+      <StatusIndicator status={state} label={copy.label} aria-live="polite" />
+      <p>{copy.detail}</p>
     </section>
   );
 }

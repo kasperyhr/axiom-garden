@@ -1,5 +1,9 @@
+import { ArrowRight, Badge, Card } from "@axiom-garden/ui";
+import { Link } from "react-router-dom";
+
 import { GeometricInstrument } from "../components/GeometricInstrument";
 import { HealthIndicator } from "../components/HealthIndicator";
+import { usePageMetadata } from "../hooks/usePageMetadata";
 
 const capabilities = [
   {
@@ -20,66 +24,69 @@ const capabilities = [
     titleZh: "解释结果",
     description: "Trace each outcome back to the rules that made it possible.",
   },
-];
+] as const;
 
 export function HomePage() {
+  usePageMetadata(
+    "Home",
+    "Axiom Garden is a visual laboratory for safe, rule-driven puzzle worlds.",
+  );
+
   return (
-    <>
-      <a className="skip-link" href="#main-content">
-        跳到主要内容
-      </a>
-      <header className="site-header">
-        <a className="brand" href="/" aria-label="Axiom Garden 公理花园首页">
-          <span>Axiom Garden</span>
-          <span aria-hidden="true" />
-          <span lang="zh-CN">公理花园</span>
-        </a>
-        <p>Milestone 1 · Foundation</p>
-      </header>
-
-      <main id="main-content">
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="hero__copy">
-            <h1 id="hero-title">
-              <span>Axiom Garden</span>
-              <span lang="zh-CN">公理花园</span>
-            </h1>
-            <div className="hero__rule" aria-hidden="true" />
-            <p className="hero__lead">
-              Build a world from rules, then discover what becomes possible.
-            </p>
-            <p className="hero__lead-zh" lang="zh-CN">
-              用规则种下一座世界，再发现其中什么能够发生。
-            </p>
+    <div className="home-page">
+      <section className="home-hero" aria-labelledby="home-title">
+        <div className="home-hero__copy">
+          <Badge tone="neutral">Milestone 2 · Design System</Badge>
+          <h1 id="home-title">
+            <span>Axiom Garden</span>
+            <small lang="zh-CN">公理花园</small>
+          </h1>
+          <p className="home-hero__lead">
+            Build a world from rules, then discover what becomes possible.
+          </p>
+          <p className="home-hero__lead-zh" lang="zh-CN">
+            用规则种下一座世界，再发现其中什么能够发生。
+          </p>
+          <div className="home-hero__actions">
+            <Link className="app-link app-link--primary" to="/workspace">
+              Explore workspace shell
+              <ArrowRight aria-hidden="true" />
+            </Link>
+            <Link className="app-link app-link--secondary" to="/components">
+              View design system
+            </Link>
           </div>
+          <p className="scope-note">
+            Static product foundation only — no editor or simulation is implemented.
+          </p>
+        </div>
+        <div className="home-hero__instrument">
           <GeometricInstrument />
-        </section>
+        </div>
+      </section>
 
-        <section className="capabilities" aria-label="产品能力方向">
+      <section className="capability-grid" aria-labelledby="capabilities-title">
+        <div className="section-heading">
+          <p className="eyebrow">Direction</p>
+          <h2 id="capabilities-title">A laboratory for executable ideas</h2>
+        </div>
+        <div className="capability-grid__cards">
           {capabilities.map((capability) => (
-            <article className="capability" key={capability.number}>
-              <span className="capability__number" aria-hidden="true">
+            <Card key={capability.number}>
+              <span className="capability-card__number" aria-hidden="true">
                 {capability.number}
               </span>
-              <div>
-                <h2>{capability.title}</h2>
-                <p className="capability__title-zh" lang="zh-CN">
-                  {capability.titleZh}
-                </p>
-                <p className="capability__description">{capability.description}</p>
-              </div>
-            </article>
+              <h3>{capability.title}</h3>
+              <p className="capability-card__zh" lang="zh-CN">
+                {capability.titleZh}
+              </p>
+              <p>{capability.description}</p>
+            </Card>
           ))}
-        </section>
+        </div>
+      </section>
 
-        <HealthIndicator />
-      </main>
-
-      <footer className="site-footer">
-        <span aria-hidden="true" />
-        <p>A visual laboratory for rule-driven puzzle worlds.</p>
-        <span aria-hidden="true" />
-      </footer>
-    </>
+      <HealthIndicator />
+    </div>
   );
 }

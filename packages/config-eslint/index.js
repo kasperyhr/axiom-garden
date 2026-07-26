@@ -33,16 +33,23 @@ export default tseslint.config(
     },
   },
   {
-    files: ["apps/web/**/*.{ts,tsx}"],
+    files: ["apps/web/**/*.{ts,tsx}", "packages/ui/**/*.{ts,tsx}"],
     languageOptions: {
       globals: globals.browser,
     },
     plugins: {
       "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
     },
     rules: {
       ...reactHooks.configs.flat.recommended.rules,
+    },
+  },
+  {
+    files: ["apps/web/**/*.{ts,tsx}"],
+    plugins: {
+      "react-refresh": reactRefresh,
+    },
+    rules: {
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
   },
@@ -50,6 +57,12 @@ export default tseslint.config(
     files: ["**/*.{js,mjs,cjs}"],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    files: ["apps/web/public/**/*.js"],
+    languageOptions: {
+      globals: globals.browser,
     },
   },
   {

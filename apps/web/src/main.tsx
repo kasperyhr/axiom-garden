@@ -1,8 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider, ToastProvider } from "@axiom-garden/ui";
 
 import { App } from "./App";
+import "@axiom-garden/ui/styles.css";
 import "./styles.css";
 
 const rootElement = document.querySelector("#root");
@@ -13,8 +15,12 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <ThemeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

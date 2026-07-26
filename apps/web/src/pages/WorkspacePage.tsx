@@ -1,0 +1,123 @@
+import {
+  Badge,
+  Button,
+  Dialog,
+  IconButton,
+  Info,
+  LayoutPanelLeft,
+  Palette,
+  Panel,
+  PanelRight,
+  Separator,
+  Shapes,
+  StatusIndicator,
+  Tooltip,
+} from "@axiom-garden/ui";
+
+import { GeometricInstrument } from "../components/GeometricInstrument";
+import { usePageMetadata } from "../hooks/usePageMetadata";
+
+const tools = [
+  { label: "Layout preview", icon: <LayoutPanelLeft /> },
+  { label: "Shape language", icon: <Shapes /> },
+  { label: "Surface tokens", icon: <Palette /> },
+] as const;
+
+function InspectorContent() {
+  return (
+    <div className="inspector-content">
+      <Badge tone="info">Preview only</Badge>
+      <h2>Inspector placeholder</h2>
+      <p>
+        This region proves the future information-panel layout. It does not inspect, edit, or retain
+        any product data.
+      </p>
+      <Separator />
+      <dl>
+        <div>
+          <dt>Surface</dt>
+          <dd>Elevated</dd>
+        </div>
+        <div>
+          <dt>Width token</dt>
+          <dd>19rem</dd>
+        </div>
+        <div>
+          <dt>Mode</dt>
+          <dd>Read-only</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+export default function WorkspacePage() {
+  usePageMetadata("Workspace", "A static preview of the Axiom Garden application shell.");
+
+  return (
+    <div className="workspace-page">
+      <div className="workspace-page__intro">
+        <div>
+          <p className="eyebrow">Layout validation</p>
+          <h1>Workspace shell preview</h1>
+          <p>
+            A responsive, static frame for future work. No world, editor, rules, or canvas engine
+            exists in this milestone.
+          </p>
+        </div>
+        <Dialog
+          trigger={
+            <Button
+              className="mobile-inspector-trigger"
+              variant="secondary"
+              leadingIcon={<PanelRight />}
+            >
+              Open inspector
+            </Button>
+          }
+          title="Inspector preview"
+          description="A read-only mobile layout sample."
+        >
+          <InspectorContent />
+        </Dialog>
+      </div>
+
+      <section className="workspace-shell" aria-label="Static workspace layout">
+        <aside className="tool-rail" aria-label="Preview tools">
+          {tools.map((tool) => (
+            <Tooltip content={tool.label} key={tool.label}>
+              <IconButton aria-label={tool.label} icon={tool.icon} variant="ghost" />
+            </Tooltip>
+          ))}
+        </aside>
+
+        <Panel className="canvas-placeholder">
+          <div className="canvas-placeholder__heading">
+            <div>
+              <p className="eyebrow">Central region</p>
+              <h2>Canvas placeholder</h2>
+            </div>
+            <Badge>Static</Badge>
+          </div>
+          <GeometricInstrument />
+          <p className="canvas-placeholder__note">
+            Abstract geometry demonstrates spacing and contrast only.
+          </p>
+        </Panel>
+
+        <Panel className="desktop-inspector">
+          <InspectorContent />
+        </Panel>
+
+        <footer className="workspace-status">
+          <StatusIndicator status="idle" label="Static shell" />
+          <span>Milestone 2 · No product data loaded</span>
+          <span className="workspace-status__readonly">
+            <Info aria-hidden="true" />
+            Read-only preview
+          </span>
+        </footer>
+      </section>
+    </div>
+  );
+}

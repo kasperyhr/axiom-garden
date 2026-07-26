@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cross-env WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler dev --port 8787",
-    "build": "cross-env WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler deploy --dry-run --outdir dist",
+    "dev": "cross-env XDG_CONFIG_HOME=.wrangler/config WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler dev --port 8787",
+    "build": "cross-env XDG_CONFIG_HOME=.wrangler/config WRANGLER_SEND_METRICS=false WRANGLER_SEND_ERROR_REPORTS=false wrangler deploy --dry-run --outdir dist",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "clean": "rimraf dist coverage .wrangler"

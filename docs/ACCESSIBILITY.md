@@ -2,24 +2,51 @@
 
 ## 目标
 
-Axiom Garden 以 **WCAG 2.2 AA** 为产品目标。该目标适用于视觉、键盘、触控、辅助技术、动态状态和未来
-编辑器交互。
+Axiom Garden 以 **WCAG 2.2 AA** 为产品目标。优先采用原生 HTML 语义，仅在原生语义不足时使用必要 ARIA。
 
-## 基线要求
+## Milestone 2 已实现
 
-- **键盘**：所有交互都可用键盘完成；焦点顺序符合视觉与阅读顺序；不产生键盘陷阱。
-- **Focus**：使用清晰、高对比的 `:focus-visible` 样式，不仅依赖浏览器默认效果。
-- **对比度**：普通文本、重要图形和交互状态满足 AA 对比度；设计令牌变更需要复核。
-- **语义结构**：使用唯一主标题、顺序合理的标题、`header/main/footer/nav/section/article` 和正确控件。
-- **Reduced motion**：尊重 `prefers-reduced-motion`；动效不是理解内容的前提。
-- **触控目标**：未来交互目标原则上至少 44×44 CSS px，密集工具需提供等效可访问操作。
-- **状态表达**：loading、healthy、unavailable 等状态同时使用文字和形状/图标，不只用颜色。
-- **语言**：页面声明主要语言，双语片段在需要时标记语言。
-- **缩放与响应式**：支持窄屏和 200% 文本缩放，不隐藏核心信息。
+- 页面具有 Top Bar、导航、唯一主内容区、顺序合理的标题与 Skip Link。
+- 路由变化更新 title，并把键盘焦点移动到主内容。
+- 所有按钮与链接具有清晰 `:focus-visible`，IconButton 在类型层要求可访问名称。
+- Tabs 支持方向键、Home、End 和焦点管理。
+- Dialog 提供 focus trap、Escape、关闭后焦点返回和背景滚动管理。
+- Dropdown 支持方向键、Escape 与焦点；Tooltip 同时支持 hover、键盘 focus 与 Escape。
+- Popover 支持点击外部和 Escape 关闭。
+- Toast 使用 `aria-live`，最多保留三条，可手动关闭并自动消失。
+- 状态组件同时使用文字与图标，不依赖颜色单独表达。
+- `prefers-reduced-motion` 将动效 token 降至最小，关键内容不依赖动画。
+- 桌面与移动主要控件目标接近或达到 44×44 CSS px。
+- 390px、360px 视口的关键页面有水平溢出自动检查。
+- light、dark 均使用独立、可读的语义色。
 
-## Milestone 1 实现
+## 键盘交互约定
 
-首页使用语义区域和跳转到主要内容链接；健康状态通过 `role="status"` 与 `aria-live` 公布；装饰几何图
-隐藏于辅助技术；动效提供 reduced-motion 降级；API 不可用仍以清晰文字表达。
+- `Tab` / `Shift+Tab`：按视觉和 DOM 顺序移动。
+- Tabs：左右方向键切换；Home/End 移到首尾。
+- Dropdown：上下方向键移动；Enter/Space 选择；Escape 关闭。
+- Dialog/Popover/Tooltip：Escape 关闭；Dialog 内焦点不离开模态表面。
+- 页面切换：主内容接收程序化焦点，但不产生滚动跳动。
 
-未来编辑器的复杂键盘模型、网格语义、快捷键帮助与屏幕阅读器策略将在对应 Milestone 设计和测试。
+不添加重复 landmark、错误 role 或仅为测试而存在的冗余 ARIA。
+
+## 自动检查
+
+`pnpm test:a11y` 使用 `@axe-core/playwright` 扫描：
+
+- Home
+- Workspace
+- Components
+- Not Found
+- Help Dialog 打开状态
+
+不全局关闭任何严重规则。Milestone 2 建立过程中 axe 实际发现并修复了 live region ARIA、对比度和 404 标题层级问题。
+
+## 人工检查
+
+自动工具不能替代人工测试。每次视觉或交互变更至少复核：
+
+- 完整键盘路径、focus 可见性与焦点返回
+- 200% 文本缩放、窄屏布局与触控目标
+- light/dark 对比度和状态的非颜色表达
+- 屏幕阅读器的 landmark、标题、Dialog 描述与 live region
