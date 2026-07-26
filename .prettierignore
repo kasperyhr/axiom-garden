@@ -3,3 +3,5 @@ dist
 coverage
 .turbo
 pnpm-lock.yaml
+packages/domain/schema/axiom-garden-world-v1.schema.json
+packages/domain/test/fixtures/representative-valid-world-v1.json

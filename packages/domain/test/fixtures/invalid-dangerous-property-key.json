@@ -1,0 +1,47 @@
+{
+  "format": "axiom-garden/world",
+  "schemaVersion": 1,
+  "id": "world:unsafe-property",
+  "metadata": {
+    "title": "Unsafe property",
+    "description": "",
+    "createdAt": "2026-07-26T00:00:00.000Z",
+    "updatedAt": "2026-07-26T00:00:00.000Z",
+    "tags": []
+  },
+  "grid": {
+    "kind": "square",
+    "width": 1,
+    "height": 1,
+    "origin": "top-left",
+    "boundary": "bounded"
+  },
+  "palette": {
+    "symbols": [
+      {
+        "id": "symbol:unsafe",
+        "name": "Unsafe symbol",
+        "shape": "square",
+        "appearance": {
+          "fill": "paper",
+          "stroke": "graphite",
+          "variant": "outline"
+        },
+        "defaultProperties": {
+          "__proto__": "blocked"
+        }
+      }
+    ]
+  },
+  "layers": [
+    {
+      "id": "layer:base",
+      "name": "Base",
+      "order": 0,
+      "visible": true,
+      "locked": false
+    }
+  ],
+  "cells": [],
+  "entities": []
+}

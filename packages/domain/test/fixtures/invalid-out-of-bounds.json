@@ -1,0 +1,44 @@
+{
+  "format": "axiom-garden/world",
+  "schemaVersion": 1,
+  "id": "world:out-of-bounds",
+  "metadata": {
+    "title": "Out of bounds",
+    "description": "",
+    "createdAt": "2026-07-26T00:00:00.000Z",
+    "updatedAt": "2026-07-26T00:00:00.000Z",
+    "tags": []
+  },
+  "grid": {
+    "kind": "square",
+    "width": 2,
+    "height": 2,
+    "origin": "top-left",
+    "boundary": "bounded"
+  },
+  "palette": {
+    "symbols": []
+  },
+  "layers": [
+    {
+      "id": "layer:base",
+      "name": "Base",
+      "order": 0,
+      "visible": true,
+      "locked": false
+    }
+  ],
+  "cells": [
+    {
+      "id": "cell:outside",
+      "layerId": "layer:base",
+      "coordinate": {
+        "x": 2,
+        "y": 0
+      },
+      "tags": ["marker"],
+      "properties": {}
+    }
+  ],
+  "entities": []
+}

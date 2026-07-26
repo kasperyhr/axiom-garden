@@ -24,6 +24,7 @@ function areaTitle(pathname: string): string {
   if (pathname === "/") return "Home";
   if (pathname === "/workspace") return "Workspace";
   if (pathname === "/components") return "Components";
+  if (pathname === "/world-format") return "World format v1";
   return "Page not found";
 }
 
@@ -74,13 +75,16 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             description="A local guide to the current product shell."
           >
             <p>
-              Milestone 2 establishes the shared design system, navigation, themes, and static
-              workspace layout.
+              Milestone 3 defines the strict, versioned World Document v1 format and a local
+              validation laboratory.
             </p>
             <p>
-              The world model, editor, rules, persistence, and simulation are intentionally not
-              implemented.
+              Simulation, rules, editing, file upload, persistence, and grid rendering remain
+              intentionally unavailable.
             </p>
+            <NavLink className="app-link app-link--secondary" to="/world-format">
+              Open World Format Lab
+            </NavLink>
           </Dialog>
         </div>
       </header>

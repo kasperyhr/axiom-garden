@@ -11,6 +11,7 @@
     "clean": "rimraf dist coverage"
   },
   "dependencies": {
+    "@axiom-garden/domain": "workspace:*",
     "@axiom-garden/protocol": "workspace:*",
     "@axiom-garden/ui": "workspace:*",
     "@tailwindcss/vite": "4.3.3",

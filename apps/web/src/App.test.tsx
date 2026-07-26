@@ -1,5 +1,5 @@
 import { ThemeProvider, ToastProvider } from "@axiom-garden/ui";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -82,6 +82,34 @@ describe("Axiom Garden app shell", () => {
     await waitFor(() => {
       expect(document.title).toBe("Components | Axiom Garden");
     });
+  });
+
+  it("validates, reports, resets, and copies World Document v1 JSON", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderApp("/world-format");
+    expect(
+      await screen.findByRole("heading", { name: "World Document v1" }, { timeout: 5_000 }),
+    ).toBeVisible();
+    expect(screen.getByText("Valid v1 document")).toBeVisible();
+    await waitFor(() => {
+      expect(document.title).toBe("World format v1 | Axiom Garden");
+    });
+
+    const input = screen.getByLabelText("World JSON");
+    fireEvent.change(input, { target: { value: "{" } });
+    await user.click(screen.getByRole("button", { name: "Validate" }));
+    expect(screen.getByText("invalid_json")).toBeVisible();
+    expect(screen.getByText("Input is not valid JSON")).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Reset example" }));
+    expect(screen.getByText("Valid v1 document")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Copy canonical JSON" }));
+    expect(writeText).toHaveBeenCalledOnce();
   });
 
   it("renders Not Found and returns to Home", async () => {

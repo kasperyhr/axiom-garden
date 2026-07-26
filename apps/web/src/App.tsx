@@ -8,6 +8,7 @@ import { HomePage } from "./pages/HomePage";
 
 const WorkspacePage = lazy(async () => import("./pages/WorkspacePage"));
 const ComponentsPage = lazy(async () => import("./pages/ComponentsPage"));
+const WorldFormatPage = lazy(async () => import("./pages/WorldFormatPage"));
 const NotFoundPage = lazy(async () => import("./pages/NotFoundPage"));
 
 function RouteFallback() {
@@ -29,6 +30,7 @@ export function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/workspace" element={<WorkspacePage />} />
             <Route path="/components" element={<ComponentsPage />} />
+            <Route path="/world-format" element={<WorldFormatPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Suspense>

@@ -1,0 +1,29 @@
+{
+  "name": "@axiom-garden/domain",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "schema:generate": "tsx scripts/generate-json-schema.ts",
+    "schema:check": "vitest run test/schema-drift.test.ts",
+    "clean": "rimraf dist coverage"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@axiom-garden/config-typescript": "workspace:*",
+    "fast-check": "4.3.0",
+    "rimraf": "6.0.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

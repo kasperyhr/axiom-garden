@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 import { HealthResponseSchema } from "../packages/protocol/src";
+import {
+  parseWorldJson,
+  REPRESENTATIVE_WORLD_V1,
+  serializeWorldDocument,
+} from "../packages/domain/src";
 import { app } from "../apps/worker/src/app";
 
 test.beforeEach(async ({ page }) => {
@@ -21,11 +26,22 @@ test("critical routes exist in the built application shell", async ({ page }) =>
     ["/", /Axiom Garden\s*公理花园/u],
     ["/workspace", "Workspace shell preview"],
     ["/components", "Design system"],
+    ["/world-format", "World Document v1"],
     ["/missing", "Page not found"],
   ] as const) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
+});
+
+test("World Document fixtures and canonical serialization remain valid", () => {
+  const canonical = serializeWorldDocument(REPRESENTATIVE_WORLD_V1);
+  const parsed = parseWorldJson(canonical);
+  expect(parsed.success).toBe(true);
+  if (parsed.success) {
+    expect(serializeWorldDocument(parsed.data)).toBe(canonical);
+  }
+  expect(parseWorldJson('{"format":"axiom-garden/world","schemaVersion":2}').success).toBe(false);
 });
 
 test("Worker health remains compatible with the shared schema", async () => {

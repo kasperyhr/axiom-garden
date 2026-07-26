@@ -18,6 +18,7 @@ for (const [path, title] of [
   ["/", "Home | Axiom Garden"],
   ["/workspace", "Workspace | Axiom Garden"],
   ["/components", "Components | Axiom Garden"],
+  ["/world-format", "World format v1 | Axiom Garden"],
   ["/missing", "Page not found | Axiom Garden"],
 ] as const) {
   test(`axe scan passes for ${path}`, async ({ page }) => {

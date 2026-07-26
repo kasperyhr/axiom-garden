@@ -11,7 +11,7 @@
 - **Property-based test**：未来用生成输入验证广泛不变量。
 - **Deterministic replay test**：未来验证相同版本、输入与种子产生完全一致轨迹。
 
-## Milestone 2 已完成
+## Milestone 3 已完成
 
 ### Unit 与 integration
 
@@ -19,6 +19,17 @@
 - Worker：200、共享 schema、Content-Type、安全响应头。
 - UI：Button variant/loading、IconButton 名称、Status、Tabs 键盘、Dialog 打开/关闭/Escape/焦点返回、Tooltip focus、Toast 关闭、Theme 默认/持久化。
 - Web：App Shell、首页与健康三态、Workspace、Components、Not Found、title、主题切换。
+- Domain schema：最小/代表性文档、strict key、enum、网格、ID、datetime、orientation、properties。
+- Domain semantic：ID/order/coordinate/cell 唯一性、引用、时间、空 sparse cell、数量限制。
+- Domain serialization/migration：字段和集合顺序、LF、round trip、版本识别与无虚构 v0。
+- Domain security：UTF-8 byte 上限、dangerous key 与 prototype pollution。
+- World Format Lab：默认有效、syntax issue、reset、canonical output 与 clipboard。
+
+### Property-based 与 schema drift
+
+`fast-check` 使用有限规模生成器验证 coordinate key 稳定、tags/properties normalization 幂等、canonical serialization 幂等，以及 validate/serialize 不修改输入。测试不生成无界文档。
+
+JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结果与已提交 schema 逐字节比较。Representative fixture 同时参与 runtime schema、semantic validation、canonical round-trip 和 smoke。
 
 ### Playwright E2E
 
@@ -30,6 +41,7 @@
 - 主题切换与刷新后持久化
 - Help Dialog 与 Escape
 - Components
+- World Format Lab：valid、invalid syntax、out-of-bounds、reset、canonical clipboard
 - 404 返回 Home
 - 1440、390、360 宽度无水平溢出
 
@@ -37,7 +49,7 @@
 
 ### Accessibility
 
-`pnpm test:a11y` 对四个页面和打开 Dialog 状态运行完整 axe 扫描。测试不关闭严重规则；失败输出规则 ID、目标和摘要。
+`pnpm test:a11y` 对 Home、Workspace、Components、World Format Lab、Not Found 和打开 Dialog 状态运行完整 axe 扫描。测试不关闭严重规则；失败输出规则 ID、目标和摘要。
 
 ### Smoke
 
@@ -45,6 +57,7 @@
 
 - Home、Workspace、Components、Not Found 路由存在
 - Worker 应用的 `/api/health` 响应通过共享 `HealthResponseSchema`
+- World Format 路由存在、representative world 通过、未来版本被拒绝、canonical round-trip 稳定
 
 ## 浏览器测试编排
 
@@ -61,10 +74,12 @@ pnpm lint
 pnpm format:check
 pnpm typecheck
 pnpm test
+pnpm test:domain
+pnpm schema:check
 pnpm build
 pnpm test:e2e
 pnpm test:a11y
 pnpm test:smoke
 ```
 
-不得通过删除、跳过或弱化测试修复失败。Property-based、deterministic replay 仍属于对应后续 Milestone；Milestone 2 没有领域模型可供这些测试使用。
+不得通过删除、跳过或弱化测试修复失败。Domain property-based tests 已在 Milestone 3 引入；deterministic replay 必须等待对应后续 Milestone 的 Engine，不得在此伪造。

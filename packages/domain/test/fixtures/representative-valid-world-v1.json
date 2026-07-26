@@ -1,0 +1,143 @@
+{
+  "format": "axiom-garden/world",
+  "schemaVersion": 1,
+  "id": "world:quiet-orbit",
+  "metadata": {
+    "title": "Quiet Orbit",
+    "description": "A small abstract arrangement for format validation.",
+    "createdAt": "2026-07-26T00:00:00.000Z",
+    "updatedAt": "2026-07-26T00:00:00.000Z",
+    "tags": [
+      "abstract",
+      "example"
+    ]
+  },
+  "grid": {
+    "kind": "square",
+    "width": 12,
+    "height": 8,
+    "origin": "top-left",
+    "boundary": "bounded"
+  },
+  "palette": {
+    "symbols": [
+      {
+        "id": "symbol:brass-diamond",
+        "name": "Brass diamond",
+        "shape": "diamond",
+        "appearance": {
+          "fill": "brass",
+          "stroke": "graphite",
+          "variant": "ring"
+        },
+        "defaultProperties": {
+          "markers": [
+            1,
+            2
+          ],
+          "weight": 2
+        }
+      },
+      {
+        "id": "symbol:moss-circle",
+        "name": "Moss circle",
+        "shape": "circle",
+        "appearance": {
+          "fill": "moss",
+          "stroke": "graphite",
+          "variant": "solid"
+        },
+        "defaultProperties": {
+          "note": "calm",
+          "weight": 1
+        }
+      }
+    ]
+  },
+  "layers": [
+    {
+      "id": "layer:objects",
+      "name": "Objects",
+      "order": 10,
+      "visible": true,
+      "locked": false
+    },
+    {
+      "id": "layer:annotations",
+      "name": "Annotations",
+      "order": 20,
+      "visible": true,
+      "locked": true
+    }
+  ],
+  "cells": [
+    {
+      "id": "cell:anchor-a",
+      "layerId": "layer:annotations",
+      "coordinate": {
+        "x": 2,
+        "y": 1
+      },
+      "tags": [
+        "anchor"
+      ],
+      "properties": {}
+    },
+    {
+      "id": "cell:anchor-b",
+      "layerId": "layer:annotations",
+      "coordinate": {
+        "x": 8,
+        "y": 5
+      },
+      "tags": [
+        "anchor",
+        "quiet"
+      ],
+      "properties": {
+        "label": "B"
+      }
+    }
+  ],
+  "entities": [
+    {
+      "id": "entity:circle-001",
+      "symbolId": "symbol:moss-circle",
+      "layerId": "layer:objects",
+      "coordinate": {
+        "x": 2,
+        "y": 1
+      },
+      "orientation": 0,
+      "properties": {
+        "active": true
+      }
+    },
+    {
+      "id": "entity:circle-002",
+      "symbolId": "symbol:moss-circle",
+      "layerId": "layer:objects",
+      "coordinate": {
+        "x": 2,
+        "y": 1
+      },
+      "orientation": 180,
+      "properties": {
+        "active": false
+      }
+    },
+    {
+      "id": "entity:diamond-001",
+      "symbolId": "symbol:brass-diamond",
+      "layerId": "layer:objects",
+      "coordinate": {
+        "x": 8,
+        "y": 5
+      },
+      "orientation": 90,
+      "properties": {
+        "weight": 3
+      }
+    }
+  ]
+}

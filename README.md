@@ -2,13 +2,14 @@
 
 > A visual laboratory for building, simulating, explaining, and remixing rule-driven puzzle worlds.
 
-Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台。当前仓库完成 **Milestone 2：设计系统与应用壳**，只提供产品外壳、共享 UI、主题、静态 Workspace 预览、组件验收页与健康检查；尚未实现领域模型、编辑器、规则语言、模拟器或持久化。
+Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台。当前仓库完成 **Milestone 3：领域模型与版本化格式**，提供严格、可验证、可规范序列化的 World Document v1，以及只读验证实验室；尚未实现编辑器、规则语言、模拟器或持久化。
 
 ## 当前可用页面
 
 - `/`：使用设计系统重构的品牌首页。
 - `/workspace`：静态 App Shell 布局预览，不包含 Canvas 引擎或产品数据。
 - `/components`：项目内设计系统展示与人工验收入口，生产构建保留，便于无独立 Storybook 的审阅。
+- `/world-format`：World Document v1 JSON 的只读验证与 canonical output 实验室。
 - `*`：安全、可恢复的 Not Found 页面。
 - `/api/health`：本地 Worker 健康检查，由 Vite proxy 转发。
 
@@ -23,6 +24,7 @@ Axiom Garden 是一款“可执行规则世界”创作、实验和解谜平台�
 - Node.js 24 LTS、Corepack、pnpm workspace、Turborepo、TypeScript strict
 - React 19、React Router、Vite、Tailwind CSS 4
 - 独立 `@axiom-garden/ui` package、语义 CSS Custom Properties
+- 独立、无框架依赖的 `@axiom-garden/domain` package、strict Zod schema、JSON Schema
 - Radix UI headless primitives、Lucide React 图标
 - Cloudflare Workers、Hono、Zod
 - Vitest、React Testing Library、Playwright、axe-core
@@ -35,6 +37,7 @@ apps/
   web/                 React/Vite Web 与 App Shell
   worker/              Hono Cloudflare Worker
 packages/
+  domain/              World Document v1、validation、migration、canonical JSON
   ui/                  token、主题、通用组件与 UI 单元测试
   protocol/            Web/Worker 共享 Zod 契约
   config-eslint/       共享 ESLint 配置
@@ -99,17 +102,22 @@ pnpm lint
 pnpm format:check
 pnpm typecheck
 pnpm test
+pnpm test:domain
 pnpm build
 pnpm test:ui
 pnpm test:e2e
 pnpm test:a11y
 pnpm test:smoke
+pnpm schema:check
+pnpm schema:generate
 ```
 
-- `test`：Protocol、Worker、UI、Web unit/integration tests。
+- `test`：Domain、Protocol、Worker、UI、Web unit/integration tests；Domain 内含 property-based、prototype pollution 与 schema drift。
 - `test:e2e`：导航、健康状态、移动 Inspector、主题、Help Dialog、404 与水平溢出。
 - `test:a11y`：对 Home、Workspace、Components、Not Found 及打开 Dialog 的状态执行完整 axe 扫描。
 - `test:smoke`：先构建 Web/Worker，再验证关键路由与 Worker/Protocol 契约。
+- `schema:check`：确认生成的 JSON Schema 与已提交文件字节一致。
+- `schema:generate`：从 Zod 单一来源重新生成 `packages/domain/schema/axiom-garden-world-v1.schema.json`。
 - Playwright 失败时写入被 `.gitignore` 排除的 `test-results/` 与 `playwright-report/`；CI 只在失败时上传诊断 artifact。
 
 格式化与清理：
@@ -145,21 +153,37 @@ Milestone 2 不引入 Storybook。保留该轻量路由可让设计、无障碍�
 
 不需要。Worker 开发、dry-run build 与测试均为本地流程，不创建 D1、KV、Durable Object 或任何真实 Cloudflare 资源。
 
-## Milestone 2 范围
+## World Document v1
+
+格式是普通 UTF-8 JSON，根标识为 `axiom-garden/world`，整数 `schemaVersion` 当前为 `1`。公开 API：
+
+```ts
+import { parseWorldJson, serializeWorldDocument } from "@axiom-garden/domain";
+
+const result = parseWorldJson(jsonText);
+if (result.success) {
+  const canonicalJson = serializeWorldDocument(result.data);
+}
+```
+
+解析会先检查 2 MiB UTF-8 字节上限，再依次完成 JSON、strict schema、引用/坐标语义验证与安全规范化。完整规范见 [docs/formats/WORLD_V1.md](docs/formats/WORLD_V1.md)。
+
+## Milestone 3 范围
 
 已完成：
 
-- 独立 UI package、语义 token、light/dark/system 主题
-- Button、Card、Panel、Badge、Status、Tabs、Tooltip、Popover、Dialog、Dropdown、Toast 等基础组件
-- App Shell、响应式导航、静态 Workspace、Components、404、Error Boundary
-- 页面 metadata、SVG favicon、键盘与 focus 基础
-- unit、E2E、axe accessibility、smoke 与 CI
+- `@axiom-garden/domain`、WorldDocumentV1、branded ID 与受限 properties
+- strict Zod schema、生成的 JSON Schema、分层 validation、结构化 issue
+- normalization、canonical serialization、version detection 与 migration registry
+- 示例/无效 fixtures、unit/property/prototype/round-trip/schema drift tests
+- lazy-loaded World Format Lab、E2E、axe、smoke 与 CI 覆盖
 
 明确未实现：
 
-- World、Cell、Entity、Rule 等 Milestone 3 领域模型
-- 网格、Canvas 编辑、拖拽、缩放、Undo/Redo
-- DSL、AST、模拟器、时间轴、重放、求解器、谜题
+- Milestone 4 的模拟 tick、状态步进、Engine package 与执行轨迹
+- Rule、Condition、Action、DSL、AST 与冲突解析
+- 网格渲染、Canvas 编辑、拖拽、缩放、Undo/Redo
+- 时间轴、重放、求解器、谜题
 - 本地作品库、账户、登录、数据库、上传、分享、协作
 - DeepSeek 或其他 LLM、遥测、付费服务、正式部署
 

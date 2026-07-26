@@ -22,6 +22,19 @@ Wasm、shell、宏展开到宿主语言、任意 URL fetch 或系统调用。规
 - 不使用 TypeScript 类型断言代替运行时验证。
 - 未来格式必须包含显式版本并有大小、范围、枚举和关联约束。
 
+### World Document v1
+
+- `parseWorldJson` 在 `JSON.parse` 前用 `TextEncoder` 检查 UTF-8 字节数，默认上限为 2 MiB；不以 JavaScript 字符数代替。
+- JSON 根必须为 object，所有 v1 object 使用 strict unknown-key 策略。
+- 未知未来版本安全拒绝，绝不静默降级；不存在 v0 migration。
+- 标识符、集合数、字符串、属性数和一维数组均有显式上限。
+- Domain properties 只允许 string、finite number、boolean、null 或这些标量的一维数组；对象、嵌套数组、Date、Map、Set、函数和非有限数值均拒绝。
+- `__proto__`、`prototype`、`constructor` 在 schema 前原始 key 检查与 schema key 白名单两层拒绝，测试确认 `Object.prototype` 不受污染。
+- schema validation 后继续检查 ID 唯一、引用存在、坐标范围、时间顺序、layer order 与 sparse cell 唯一性。
+- issue 只包含稳定 code、结构化 path、通用英文 message 和受限 details，不回显完整输入或 stack trace。
+
+World Format Lab 只接收粘贴到 textarea 的 JSON 文本；不使用 `eval`、`Function`、动态用户路径 import、`dangerouslySetInnerHTML`、URL/CSS 注入、文件上传、网络请求、localStorage world 或 IndexedDB。
+
 ## 依赖风险
 
 - 使用固定版本和提交的 `pnpm-lock.yaml`。
@@ -53,7 +66,7 @@ Milestone 1 不创建限速资源。任何未来公开写端点、求解或生�
 
 ## 用户生成内容规划
 
-未来作品需要 schema 验证、大小限制、内容安全边界、输出编码、报告/下架流程、版本审计和分享权限。
+World Document v1 已完成 schema、大小、结构和引用验证。自然语言 title、description、tags 的内容安全仍由未来更高层负责；Domain 不做语言审核。未来作品还需要报告/下架流程、版本审计和分享权限。
 用户内容不得变成可执行 HTML/JS，也不得触发任意第三方网络请求。
 
 ## 漏洞报告流程

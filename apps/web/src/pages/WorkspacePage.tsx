@@ -13,6 +13,7 @@ import {
   StatusIndicator,
   Tooltip,
 } from "@axiom-garden/ui";
+import { Link } from "react-router-dom";
 
 import { GeometricInstrument } from "../components/GeometricInstrument";
 import { usePageMetadata } from "../hooks/usePageMetadata";
@@ -31,6 +32,11 @@ function InspectorContent() {
       <p>
         This region proves the future information-panel layout. It does not inspect, edit, or retain
         any product data.
+      </p>
+      <p>
+        <Link className="app-inline-link" to="/world-format">
+          Review World Document v1
+        </Link>
       </p>
       <Separator />
       <dl>
@@ -111,7 +117,8 @@ export default function WorkspacePage() {
 
         <footer className="workspace-status">
           <StatusIndicator status="idle" label="Static shell" />
-          <span>Milestone 2 · No product data loaded</span>
+          <span>No world document loaded</span>
+          <span>Format: axiom-garden/world v1</span>
           <span className="workspace-status__readonly">
             <Info aria-hidden="true" />
             Read-only preview

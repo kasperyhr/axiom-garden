@@ -67,6 +67,43 @@ test("opens Components and returns from a missing route", async ({ page }) => {
   await expect(page).toHaveURL(/\/$/u);
 });
 
+test("validates and restores World Document v1 JSON", async ({ page }) => {
+  await page.goto("/world-format");
+  await expect(page).toHaveTitle("World format v1 | Axiom Garden");
+  await expect(page.getByText("Valid v1 document")).toBeVisible();
+  const input = page.getByLabel("World JSON");
+  await input.fill("{");
+  await page.getByRole("button", { name: "Validate" }).click();
+  await expect(page.getByText("invalid_json")).toBeVisible();
+
+  await page.getByRole("button", { name: "Reset example" }).click();
+  await expect(page.getByText("Valid v1 document")).toBeVisible();
+  const source = await input.inputValue();
+  await input.fill(source.replace('"x": 8', '"x": 12'));
+  await page.getByRole("button", { name: "Validate" }).click();
+  await expect(page.getByText("coordinate_out_of_bounds")).toBeVisible();
+});
+
+test("produces and copies canonical World JSON", async ({ context, page }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/world-format");
+  const output = page.getByLabel("Read-only canonical JSON");
+  await expect(output).toContainText('"format": "axiom-garden/world"');
+  await page.getByRole("button", { name: "Copy canonical JSON" }).click();
+  await expect(page.getByText("Canonical JSON copied.")).toBeVisible();
+  const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+  expect(clipboardText.replace(/\r\n/gu, "\n")).toBe(await output.inputValue());
+});
+
+test("World Format Lab has no horizontal overflow on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/world-format");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
 for (const viewport of [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },
