@@ -14,6 +14,7 @@
     "@axiom-garden/domain": "workspace:*",
     "@axiom-garden/engine": "workspace:*",
     "@axiom-garden/protocol": "workspace:*",
+    "@axiom-garden/renderer": "workspace:*",
     "@axiom-garden/ui": "workspace:*",
     "@tailwindcss/vite": "4.3.3",
     "react": "19.2.8",

@@ -30,6 +30,31 @@ class ResizeObserverStub implements ResizeObserver {
 globalThis.ResizeObserver = ResizeObserverStub;
 window.scrollTo = vi.fn();
 
+const canvasContext = {
+  fillStyle: "",
+  strokeStyle: "",
+  lineWidth: 1,
+  font: "",
+  textAlign: "left" as CanvasTextAlign,
+  setTransform: vi.fn(),
+  setLineDash: vi.fn(),
+  beginPath: vi.fn(),
+  moveTo: vi.fn(),
+  lineTo: vi.fn(),
+  closePath: vi.fn(),
+  stroke: vi.fn(),
+  fill: vi.fn(),
+  fillRect: vi.fn(),
+  strokeRect: vi.fn(),
+  arc: vi.fn(),
+  fillText: vi.fn(),
+};
+
+Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+  configurable: true,
+  value: vi.fn(() => canvasContext),
+});
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();

@@ -26,6 +26,7 @@ function areaTitle(pathname: string): string {
   if (pathname === "/components") return "Components";
   if (pathname === "/world-format") return "World format v1";
   if (pathname === "/engine") return "Engine playground";
+  if (pathname === "/viewer") return "World viewer";
   return "Page not found";
 }
 
@@ -76,18 +77,21 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             description="A local guide to the current product shell."
           >
             <p>
-              Milestone 4 adds a deterministic simulation core driven only by precomputed, pure-data
-              transition plans.
+              Milestone 5 adds a read-only Canvas 2D renderer for validated world and simulation
+              state data.
             </p>
             <p>
-              Rules, automatic transition generation, editing, file upload, persistence, and grid
-              rendering remain intentionally unavailable.
+              Editing, rules, automatic transition generation, file upload, persistence, and
+              playback remain intentionally unavailable.
             </p>
             <NavLink className="app-link app-link--secondary" to="/world-format">
               Open World Format Lab
             </NavLink>
             <NavLink className="app-link app-link--secondary" to="/engine">
               Open Engine Playground
+            </NavLink>
+            <NavLink className="app-link app-link--secondary" to="/viewer">
+              Open World Viewer
             </NavLink>
           </Dialog>
         </div>

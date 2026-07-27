@@ -1,6 +1,6 @@
 # 架构
 
-## 当前架构（Milestone 4）
+## 当前架构（Milestone 5）
 
 - `apps/web`：React/Vite 客户端，负责路由、App Shell、页面组合与健康状态展示。
 - `apps/worker`：Hono Cloudflare Worker，仅提供 `/api/health`。
@@ -8,6 +8,7 @@
 - `packages/protocol`：Web 与 Worker 共用的 Zod 网络契约。
 - `packages/domain`：无框架依赖的 World Document v1 schema、验证、规范化、规范序列化与迁移。
 - `packages/engine`：依赖 Domain 的纯 TypeScript 确定性模拟内核；包含 canonical state、纯数据 TransitionPlan、原子提交、receipt、snapshot 与稳定摘要。
+- `packages/renderer`：依赖 Domain 与 Engine 公开只读类型的纯 TypeScript 渲染内核；包含 RenderScene、viewport、drawing commands、Canvas 适配和 hit testing。
 - `packages/config-*`：共享工程配置，不包含产品逻辑。
 - `e2e`：真实浏览器 E2E、axe 与 smoke 测试。
 
@@ -18,6 +19,9 @@ flowchart LR
   Web --> Protocol["packages/protocol<br/>网络契约"]
   Web --> Domain["packages/domain<br/>World Document v1"]
   Web --> Engine["packages/engine<br/>确定性执行内核"]
+  Web --> Renderer["packages/renderer<br/>Canvas 2D 渲染内核"]
+  Renderer --> Engine
+  Renderer --> Domain
   Engine --> Domain
   Web -->|"GET /api/health<br/>Vite proxy"| Worker["apps/worker<br/>Hono"]
   Worker --> Protocol
@@ -33,6 +37,7 @@ App Shell 是 Web 的持久外框，包含 Top Bar、品牌、区域标题、主
 - `/components`：lazy-loaded 设计系统验收页。
 - `/world-format`：lazy-loaded World Document v1 验证实验室。
 - `/engine`：lazy-loaded Engine Playground，只执行内置的纯数据 TransitionPlan。
+- `/viewer`：lazy-loaded World Viewer，只呈现内置 world/state，不修改任何领域数据。
 - `*`：lazy-loaded Not Found。
 
 非首页页面按路由拆分，避免进入首页初始 chunk。`/components` 保留在生产构建中，作为无额外服务的设计系统人工验收入口。
@@ -46,9 +51,10 @@ App Shell 是 Web 的持久外框，包含 Top Bar、品牌、区域标题、主
 ## apps 与 packages 边界
 
 - `apps` 是可运行入口，可以依赖 `packages`；`packages` 不得依赖任何 `apps`。
-- Web 可依赖 UI、Protocol、Domain 与 Engine，但不得导入 Worker 内部实现。
+- Web 可依赖 UI、Protocol、Domain、Engine 与 Renderer，但不得导入 Worker 内部实现。
 - Worker 当前只依赖 Protocol，不依赖 Web、UI、Domain 或 Engine。
 - Engine 只依赖 Domain 和轻量纯 TypeScript 依赖，不依赖 React、UI、Web、Worker、Protocol 或 Cloudflare runtime。
+- Renderer 只依赖 Domain 与 Engine 的公开只读边界，不依赖 React、DOM、UI、Web、Worker、Protocol 或 Cloudflare runtime。
 - Domain 不依赖 Engine、Protocol、UI、React、Worker、Web 或 Cloudflare runtime。
 - UI 不依赖 Domain 或 Engine，也不重新导出领域类型。
 - Protocol 只容纳跨网络边界契约，不容纳 UI、执行器或领域占位类型。
@@ -61,6 +67,9 @@ flowchart TD
   Web --> Protocol["packages/protocol"]
   Web --> Domain["packages/domain"]
   Web --> Engine["packages/engine"]
+  Web --> Renderer["packages/renderer"]
+  Renderer --> Engine
+  Renderer --> Domain
   Engine --> Domain
   Worker["apps/worker"] --> Protocol
 ```
@@ -71,6 +80,7 @@ flowchart TD
 - `packages/protocol → Domain | Engine | apps`
 - `packages/domain → Engine | Protocol | UI | apps`
 - `packages/engine → UI | Web | Worker | Protocol | React | Hono | Cloudflare runtime`
+- `packages/renderer → UI | Web | Worker | Protocol | React | DOM | Cloudflare runtime`
 - `apps/worker → apps/web | packages/ui`
 - `apps/web → apps/worker` 内部实现
 
@@ -145,4 +155,28 @@ Snapshot 包含版本、SimulationState 和摘要，使用普通 JSON-compatible
 - 未来规则层可以读取经过验证的 Domain/Engine 输入并产生 TransitionPlan，但不能让 Engine 接受 callback、代码字符串、表达式或自定义执行器。
 - Engine 的 SimulationState、receipt、snapshot 与摘要不能反向污染 World Document v1。
 
-Milestone 4 没有 Rule、Condition、Action、自动 transition 生成、碰撞、Canvas、编辑器、时间线或 replay 历史；这些只能由后续正式 Milestone 引入。
+Milestone 5 只有只读 Canvas 呈现；没有 Rule、Condition、Action、自动 transition 生成、碰撞、世界编辑、时间线或 replay 历史。
+
+## Renderer 数据流
+
+Renderer 把 canonical World Document 或 SimulationState 投影为只读 `RenderScene`。Scene 保存稳定排序的 layer、cell、entity 与可重建坐标桶；Canvas context、DOM node、React element、当前时间和随机值均不进入 scene。
+
+```mermaid
+flowchart LR
+  World["WorldDocumentV1"] --> Scene["RenderScene"]
+  State["SimulationStateV1"] --> Scene
+  Scene --> Commands["deterministic draw commands"]
+  Viewport["ViewportState"] --> Commands
+  Theme["resolved RendererTheme"] --> Commands
+  Commands --> Adapter["minimal Canvas 2D adapter"]
+  Scene --> Hit["coordinate-bucket hit testing"]
+  Viewport --> Hit
+  Hit --> Web["React interaction state"]
+  Scene --> Summary["accessible scene summary"]
+  Web --> Canvas["apps/web Canvas lifecycle"]
+  Adapter --> Canvas
+```
+
+Web 负责 Pointer Events、键盘、ResizeObserver、requestAnimationFrame 合并调度与面板状态；Renderer 负责坐标转换、可视范围、几何、绘制顺序和命中规则。`Map` 等派生索引不进入可持久化数据，图层临时可见性覆盖也不修改 World 或 Engine state。完整契约见 `docs/renderer/RENDERER_V1.md`。
+
+允许的核心方向为 `Domain → Engine → Renderer → Web`。Renderer 只观察 Engine，不生成 TransitionPlan；Milestone 5 的 selection、hover、pan、zoom 和 layer override 均为临时 Viewer 状态，不是领域写操作。

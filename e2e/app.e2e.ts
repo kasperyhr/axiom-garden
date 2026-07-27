@@ -25,7 +25,7 @@ test("moves from Home into the static Workspace", async ({ page }) => {
   await page.getByRole("link", { name: /Explore workspace shell/u }).click();
   await expect(page).toHaveURL(/\/workspace$/u);
   await expect(page.getByRole("heading", { name: "Workspace shell preview" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Canvas placeholder" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Read-only viewer preview" })).toBeVisible();
 });
 
 test("opens and closes the mobile Inspector drawer", async ({ page }) => {
@@ -143,6 +143,98 @@ test("opens Engine from Workspace and has no mobile overflow", async ({ page }) 
   await page.getByRole("link", { name: "Open Engine Playground" }).first().click();
   await expect(page).toHaveURL(/\/engine$/u);
   await expect(page.getByRole("heading", { name: "Engine Playground" })).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("inspects, pans, zooms, and fits the read-only World Viewer", async ({ page }) => {
+  await page.goto("/viewer");
+  await expect(page).toHaveTitle("World viewer | Axiom Garden");
+  const canvas = page.getByTestId("world-canvas");
+  await expect(canvas).toBeVisible();
+  await expect(page.getByTestId("viewer-tick")).toHaveText("0");
+  const initialDigest = await page.getByTestId("viewer-digest").textContent();
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  const zoom = Math.min((box.width - 64) / (12 * 48), (box.height - 64) / (8 * 48));
+  const offsetX = (box.width - 12 * 48 * zoom) / 2;
+  const offsetY = (box.height - 8 * 48 * zoom) / 2;
+  const pointFor = (x: number, y: number) => ({
+    x: offsetX + (x + 0.5) * 48 * zoom,
+    y: offsetY + (y + 0.5) * 48 * zoom,
+  });
+
+  await canvas.click({ position: pointFor(2, 1) });
+  await expect(page.getByText("entity:circle-002").first()).toBeVisible();
+  await canvas.click({ position: pointFor(0, 0) });
+  await expect(page.getByText("No object at this coordinate").first()).toBeVisible();
+  await canvas.hover({ position: pointFor(8, 5) });
+  await expect(page.getByTestId("viewer-digest")).toHaveText(initialDigest ?? "");
+
+  const offsetBefore = Number(await canvas.getAttribute("data-offset-x"));
+  await page.getByRole("button", { name: "Pan" }).click();
+  await canvas.hover({ position: { x: box.width / 2, y: box.height / 2 } });
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2 + 20);
+  await page.mouse.up();
+  expect(Number(await canvas.getAttribute("data-offset-x"))).not.toBe(offsetBefore);
+
+  const zoomBefore = Number(await canvas.getAttribute("data-zoom"));
+  await canvas.dispatchEvent("wheel", {
+    clientX: box.x + box.width / 2,
+    clientY: box.y + box.height / 2,
+    deltaY: -100,
+  });
+  expect(Number(await canvas.getAttribute("data-zoom"))).toBeGreaterThan(zoomBefore);
+  await page.getByRole("button", { name: "Fit" }).click();
+  expect(Number(await canvas.getAttribute("data-zoom"))).toBeCloseTo(zoom, 5);
+});
+
+test("respects Viewer layers, keyboard inspection, and demonstration state", async ({ page }) => {
+  await page.goto("/viewer");
+  const canvas = page.getByTestId("world-canvas");
+  await canvas.focus();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("entity:circle-002").first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("Nothing selected").first()).toBeVisible();
+
+  await page.getByRole("button", { name: /Objects/u }).click();
+  await canvas.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("cell:anchor-a").first()).toBeVisible();
+
+  const digest = page.getByTestId("viewer-digest");
+  const initialDigest = await digest.textContent();
+  await page.getByRole("button", { name: "Demonstration state" }).click();
+  await expect(page.getByTestId("viewer-tick")).toHaveText("1");
+  expect(await digest.textContent()).not.toBe(initialDigest);
+  await page.getByRole("button", { name: "Initial state" }).click();
+  await expect(page.getByTestId("viewer-tick")).toHaveText("0");
+  await expect(digest).toHaveText(initialDigest ?? "");
+});
+
+test("opens Viewer from Workspace, supports dark theme, and fits mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/workspace");
+  await page
+    .getByRole("link", { name: /World Viewer/u })
+    .first()
+    .click();
+  await expect(page).toHaveURL(/\/viewer$/u);
+  await page.getByRole("button", { name: /Theme:/u }).click();
+  await page.getByRole("menuitem", { name: "Dark" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "Layers" }).click();
+  await expect(page.getByRole("dialog", { name: "Viewer layers" })).toBeVisible();
+  await page.keyboard.press("Escape");
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );

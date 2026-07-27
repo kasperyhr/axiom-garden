@@ -42,6 +42,17 @@ Axiom Garden 以 **WCAG 2.2 AA** 为产品目标。优先采用原生 HTML 语�
 
 不全局关闭任何严重规则。Milestone 2 建立过程中 axe 实际发现并修复了 live region ARIA、对比度和 404 标题层级问题。
 
+## Milestone 5 Canvas 观察模型
+
+- Viewer Canvas 是一个可聚焦的只读观察面，具有可访问名称和快捷键说明，不为每个格子创建 DOM button。
+- 方向键移动观察坐标；Home/End 到边界端点；Enter/Space 观察当前位置最上层对象；Escape 清除选择；`+`、`-` 和 `0` 控制视口。
+- 键盘观察坐标有独立虚线轮廓；hover、cell selection、entity selection 使用不同线型或双线，状态不只依赖颜色。
+- selection 变化通过克制的 `aria-live="polite"` 通知；hover 不连续播报。
+- “Accessible scene summary” 提供世界、网格、可见图层、实体/cell 计数、tick、焦点、选择与 zoom；附近对象表最多显示 20 行。
+- Inspector 以语义文本完整呈现 Entity、Cell 或空坐标信息，Canvas 不是唯一信息来源。
+- 移动端 Layers 与 Inspector 使用既有可访问 Dialog；主要工具栏控制维持接近 44×44 CSS px 的触控目标。
+- axe 覆盖 Viewer 初始、Entity selection、移动端 Inspector 与 dark theme；pointer pinch 数学由无 DOM 单元测试验证，并保留人工触控验收。
+
 ## 人工检查
 
 自动工具不能替代人工测试。每次视觉或交互变更至少复核：

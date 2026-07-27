@@ -14,6 +14,18 @@ import {
   stepSimulation,
   TransitionPlanSchema,
 } from "../packages/engine/src";
+import {
+  createDrawCommands,
+  createRenderSceneFromSimulationState,
+  createRenderSceneFromWorld,
+  createViewport,
+  fitGridToViewport,
+  getObjectsAtWorldCoordinate,
+  hitTestScene,
+  LIGHT_RENDERER_THEME,
+  screenToScene,
+  sceneToScreen,
+} from "../packages/renderer/src";
 import { app } from "../apps/worker/src/app";
 
 test.beforeEach(async ({ page }) => {
@@ -36,6 +48,7 @@ test("critical routes exist in the built application shell", async ({ page }) =>
     ["/components", "Design system"],
     ["/world-format", "World Document v1"],
     ["/engine", "Engine Playground"],
+    ["/viewer", "World Viewer"],
     ["/missing", "Page not found"],
   ] as const) {
     await page.goto(path);
@@ -92,6 +105,33 @@ test("Engine initial state, atomic step, digest, and snapshot remain determinist
   if (restored.success) {
     expect(computeSimulationDigest(restored.data)).toBe(snapshot.digest);
   }
+});
+
+test("Renderer scenes, transforms, hit testing, visibility, and commands remain deterministic", () => {
+  const initial = createInitialSimulationState(REPRESENTATIVE_WORLD_V1);
+  expect(initial.success).toBe(true);
+  if (!initial.success) return;
+  const worldScene = createRenderSceneFromWorld(REPRESENTATIVE_WORLD_V1);
+  const stateScene = createRenderSceneFromSimulationState(initial.data);
+  expect(worldScene.entities).toHaveLength(stateScene.entities.length);
+  const viewport = fitGridToViewport(
+    createViewport({ viewportWidth: 800, viewportHeight: 600 }),
+    stateScene.grid,
+  );
+  const point = { x: 240, y: 180 };
+  const roundTrip = screenToScene(sceneToScreen(point, viewport), viewport);
+  expect(roundTrip.x).toBeCloseTo(point.x);
+  expect(roundTrip.y).toBeCloseTo(point.y);
+  expect(
+    hitTestScene(stateScene, viewport, sceneToScreen({ x: 120, y: 72 }, viewport)),
+  ).toMatchObject({
+    kind: "entity",
+  });
+  expect(
+    getObjectsAtWorldCoordinate(stateScene, { x: 2, y: 1 }, { "layer:objects": false }).entities,
+  ).toHaveLength(0);
+  const first = createDrawCommands(stateScene, viewport, LIGHT_RENDERER_THEME);
+  expect(createDrawCommands(stateScene, viewport, LIGHT_RENDERER_THEME)).toEqual(first);
 });
 
 test("Worker health remains compatible with the shared schema", async () => {

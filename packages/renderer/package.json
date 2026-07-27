@@ -1,0 +1,28 @@
+{
+  "name": "@axiom-garden/renderer",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --exclude test/performance/**",
+    "benchmark": "vitest run test/performance/benchmark.test.ts",
+    "clean": "rimraf dist coverage"
+  },
+  "dependencies": {
+    "@axiom-garden/domain": "workspace:*",
+    "@axiom-garden/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@axiom-garden/config-typescript": "workspace:*",
+    "fast-check": "4.3.0",
+    "rimraf": "6.0.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
+  }
+}

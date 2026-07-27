@@ -71,6 +71,19 @@ JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结�
 
 `pnpm benchmark:engine` 使用宽松 30 秒安全预算完成 representative initial state、100 个 no-op ticks、约 1000 个顺序 operation 和 digest。它用于发现意外指数复杂度，不作为默认 CI 的短毫秒性能断言；CI 始终执行全部 Engine correctness 与 determinism tests。
 
+## Milestone 5 Renderer 覆盖
+
+- Unit：World/SimulationState scene、canonical ordering、隐藏图层、五种 shape、orientation、同格布局、简化 glyph、输入不可变。
+- Viewport/property：坐标 round-trip、zoom anchor、pinch、pan、fit、clamp、visible bounds、DPR 预算、重复命中与 scene determinism。
+- Drawing/hit：命令顺序、可视裁剪、网格密度、light/dark、selection overlay，以及 entity/cell/empty、图层优先级和坐标桶。
+- Web/E2E：Viewer toolbar、Inspector、layer override、mouse pan/wheel、键盘、初始/演示状态、主题、Workspace 入口和 390px 水平溢出。
+- Axe：Viewer 初始、Entity selection、移动端 Inspector 与 dark theme，不关闭严重规则。
+- Smoke：Renderer 导入、World/Engine scene、transform、hit test、hidden layer、draw command determinism 与 `/viewer` 路由。
+
+`pnpm benchmark:renderer` 以宽松 30 秒预算覆盖 scene creation、fit-to-view、1000 次坐标转换、1000 次 hit test、draw command generation，以及 4000 entities 的最小 Canvas context 绘制。它不进入 CI 硬时序门禁；CI 的 `pnpm test` 始终执行 Renderer correctness、property 与 determinism tests。
+
+视觉回归以确定性 draw-command、shape geometry、overlay 与 theme tests 作为稳定主门禁。Canvas 跨平台字体栅格化和抗锯齿会使整图 pixel snapshot 易抖动，因此本 Milestone 不提交截图基线；固定 viewport/DPR 的本地 Playwright 截图用于人工验收，失败诊断仍自动保留。
+
 ## 浏览器测试编排
 
 `scripts/run-browser-tests.mjs` 只接受 `e2e`、`a11y`、`smoke` 白名单参数，直接启动本地 Vite、等待 `127.0.0.1:5173`、运行 Playwright 并关闭子进程。它不执行用户代码、不访问外部网络，也不启动真实 Cloudflare 资源。
@@ -89,6 +102,8 @@ pnpm test
 pnpm test:domain
 pnpm test:engine
 pnpm benchmark:engine
+pnpm test:renderer
+pnpm benchmark:renderer
 pnpm schema:check
 pnpm build
 pnpm test:e2e

@@ -72,7 +72,7 @@ describe("Axiom Garden app shell", () => {
     renderApp("/workspace");
     expect(await screen.findByRole("heading", { name: "Workspace shell preview" })).toBeVisible();
     expect(screen.getByRole("complementary", { name: "Preview tools" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Canvas placeholder" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Read-only viewer preview" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Inspector placeholder" })).toBeVisible();
   });
 
@@ -148,6 +148,34 @@ describe("Axiom Garden app shell", () => {
     expect(screen.getByText("snapshot_digest_mismatch")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "Reset" }));
     expect(screen.getByTestId("engine-tick")).toHaveTextContent("0");
+  });
+
+  it("renders and operates the read-only World Viewer", async () => {
+    const user = userEvent.setup();
+    renderApp("/viewer");
+    expect(
+      await screen.findByRole("heading", { name: "World Viewer" }, { timeout: 5_000 }),
+    ).toBeVisible();
+    await waitFor(() => {
+      expect(document.title).toBe("World viewer | Axiom Garden");
+    });
+    expect(screen.getByTestId("viewer-tick")).toHaveTextContent("0");
+    expect(screen.getByRole("button", { name: "Inspect" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Accessible scene summary")).toBeVisible();
+
+    const canvas = screen.getByTestId("world-canvas");
+    canvas.focus();
+    await user.keyboard("{ArrowRight}{ArrowRight}{ArrowDown}{Enter}");
+    expect(screen.getAllByText("entity:circle-002").length).toBeGreaterThan(0);
+    await user.keyboard("{Escape}");
+    expect(screen.getAllByText("Nothing selected").length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole("button", { name: /Objects/u }));
+    expect(screen.getByText("0 visible of 3")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Demonstration state" }));
+    expect(screen.getByTestId("viewer-tick")).toHaveTextContent("1");
+    await user.click(screen.getByRole("button", { name: "Initial state" }));
+    expect(screen.getByTestId("viewer-tick")).toHaveTextContent("0");
   });
 
   it("renders Not Found and returns to Home", async () => {

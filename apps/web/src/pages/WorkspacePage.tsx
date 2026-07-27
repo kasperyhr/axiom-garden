@@ -43,6 +43,11 @@ function InspectorContent() {
           Open Engine Playground
         </Link>
       </p>
+      <p>
+        <Link className="app-inline-link" to="/viewer">
+          Open World Viewer
+        </Link>
+      </p>
       <Separator />
       <dl>
         <div>
@@ -72,11 +77,14 @@ export default function WorkspacePage() {
           <p className="eyebrow">Layout validation</p>
           <h1>Workspace shell preview</h1>
           <p>
-            A responsive, static frame for future work. No world, editor, rules, or canvas engine
-            exists in this milestone.
+            A responsive shell with a lightweight read-only renderer preview. Editing, rules, and
+            world modification remain unavailable.
           </p>
-          <p>
-            <Link className="app-inline-link" to="/engine">
+          <p className="workspace-page__links">
+            <Link className="app-link app-link--primary" to="/viewer">
+              Open interactive World Viewer
+            </Link>
+            <Link className="app-link app-link--secondary" to="/engine">
               Open Engine Playground
             </Link>
           </p>
@@ -111,14 +119,14 @@ export default function WorkspacePage() {
           <div className="canvas-placeholder__heading">
             <div>
               <p className="eyebrow">Central region</p>
-              <h2>Canvas placeholder</h2>
+              <h2>Read-only viewer preview</h2>
             </div>
             <Badge>Static</Badge>
           </div>
-          <GeometricInstrument />
-          <p className="canvas-placeholder__note">
-            Abstract geometry demonstrates spacing and contrast only.
-          </p>
+          <div aria-hidden="true" className="workspace-renderer-preview">
+            <GeometricInstrument />
+          </div>
+          <p className="canvas-placeholder__note">Renderer available · Editing unavailable</p>
         </Panel>
 
         <Panel className="desktop-inspector">
@@ -130,6 +138,7 @@ export default function WorkspacePage() {
           <span>No world document loaded</span>
           <span>Format: axiom-garden/world v1</span>
           <span>Engine core available · No rule system</span>
+          <span>Renderer available · Editing unavailable</span>
           <span className="workspace-status__readonly">
             <Info aria-hidden="true" />
             Read-only preview

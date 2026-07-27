@@ -48,6 +48,16 @@ World Format Lab 只接收粘贴到 textarea 的 JSON 文本；不使用 `eval`�
 
 ## 依赖风险
 
+### Renderer v1 资源与内容边界
+
+- Renderer 只读取已经验证的 World/SimulationState 正式字段；未经信任的 tags 和 properties 仅进入转义后的文本 Inspector，不驱动颜色、图标、URL、CSS 或绘制分支。
+- 不加载外部图片、任意 SVG、远程字体、第三方脚本或网络资源；Canvas 只绘制内置有限 shape、variant 与 domain color token。
+- 网格最大 256×256，entity/cell 数量沿用 Domain/Engine 上限；绘制裁剪到可视范围，网格线在低缩放下降密度。
+- DPR 上限为 3，并以 16,777,216 backing-store pixels 为硬资源预算；极端设备参数会安全缩减实际 backing scale。
+- zoom、尺寸和 pointer 坐标都做有限数值处理；pointer capture 只作用于 Viewer Canvas，取消时清理，不全局阻止页面滚动。
+- hit testing 使用坐标桶与可见图层过滤，不执行 properties、不扫描网络、不创建持久状态。
+- Renderer 的 `rs1:` scene key 用于确定性缓存与测试，不是密码学完整性证明。
+
 - 使用固定版本和提交的 `pnpm-lock.yaml`。
 - CI 使用 frozen lockfile。
 - 新依赖需说明用途、维护状态、许可证和替代方案。

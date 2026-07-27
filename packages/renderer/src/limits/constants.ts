@@ -1,0 +1,9 @@
+export const DEFAULT_CELL_SIZE = 48;
+export const MIN_ZOOM = 0.2;
+export const MAX_ZOOM = 6;
+export const MAX_DEVICE_PIXEL_RATIO = 3;
+export const MIN_CANVAS_SIZE = 64;
+export const MAX_BACKING_STORE_PIXELS = 16_777_216;
+export const FIT_PADDING = 32;
+export const HIT_TOLERANCE_PX = 6;
+export const DRAG_THRESHOLD_PX = 6;
