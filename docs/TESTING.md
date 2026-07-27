@@ -84,6 +84,17 @@ JSON Schema 由 Zod 4 单一来源生成；`schema-drift.test.ts` 将生成结�
 
 视觉回归以确定性 draw-command、shape geometry、overlay 与 theme tests 作为稳定主门禁。Canvas 跨平台字体栅格化和抗锯齿会使整图 pixel snapshot 易抖动，因此本 Milestone 不提交截图基线；固定 viewport/DPR 的本地 Playwright 截图用于人工验收，失败诊断仍自动保留。
 
+## Milestone 6 Editor 覆盖
+
+- Unit：EditorState 防御性复制、21 类 command、revision、Entity/Cell/Symbol/Layer/metadata/grid、locked layer、issue、receipt 与 `agd1:` digest。
+- History：Undo/Redo、redo clear、failed command 不入栈、100-entry 上限、batch 单 entry、selection recovery、Reset undo 与不可变性。
+- Property：apply determinism、undo/redo round-trip、atomic failure、allocator determinism、normalization 幂等、state/command 不修改。
+- Web/E2E：tools、Canvas place/drag/delete、内部 copy/paste/duplicate、Inspector draft、Symbol/Layer Dialog、resize、JSON preview、Reset、Engine tick 0 compatibility、快捷键与移动布局。
+- Axe：Editor 初始、selection/confirmation、表单 Dialog、validation feedback、JSON Preview、mobile tools 与 dark theme。
+- Smoke：Editor import/create/add/undo、Domain validity、Engine tick 0 与 Renderer projection，并保留原有 Worker/Domain/Engine/Renderer 门禁。
+
+`pnpm benchmark:editor` 使用宽松 30 秒预算覆盖 100 次命令和 Undo/Redo、100-entry history、canonical digest、4,000 Entity move，以及 Web 层 Renderer scene rebuild。它不作为 CI 短毫秒硬门禁；drag preview 不重建 EditorState，只有 pointer up 提交。
+
 ## 浏览器测试编排
 
 `scripts/run-browser-tests.mjs` 只接受 `e2e`、`a11y`、`smoke` 白名单参数，直接启动本地 Vite、等待 `127.0.0.1:5173`、运行 Playwright 并关闭子进程。它不执行用户代码、不访问外部网络，也不启动真实 Cloudflare 资源。
@@ -102,6 +113,8 @@ pnpm test
 pnpm test:domain
 pnpm test:engine
 pnpm benchmark:engine
+pnpm test:editor
+pnpm benchmark:editor
 pnpm test:renderer
 pnpm benchmark:renderer
 pnpm schema:check
@@ -111,4 +124,4 @@ pnpm test:a11y
 pnpm test:smoke
 ```
 
-不得通过删除、跳过或弱化测试修复失败。Milestone 4 只验证相同输入与 plan sequence 的确定性执行，不保存完整 replay 历史；完整重放属于 Milestone 14。
+不得通过删除、跳过或弱化测试修复失败。Milestone 6 的 Undo/Redo 只恢复 World Document 快照，不是 simulation replay；完整重放属于 Milestone 14。

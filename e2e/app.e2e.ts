@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 const healthResponse = {
   status: "ok",
@@ -6,6 +6,16 @@ const healthResponse = {
   version: "0.1.0",
   timestamp: "2026-07-26T12:00:00.000Z",
 };
+
+async function worldPoint(canvas: Locator, x: number, y: number) {
+  const offsetX = Number(await canvas.getAttribute("data-offset-x"));
+  const offsetY = Number(await canvas.getAttribute("data-offset-y"));
+  const zoom = Number(await canvas.getAttribute("data-zoom"));
+  return {
+    x: offsetX + (x + 0.5) * 48 * zoom,
+    y: offsetY + (y + 0.5) * 48 * zoom,
+  };
+}
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/health", async (route) => {
@@ -69,6 +79,7 @@ test("opens Components and returns from a missing route", async ({ page }) => {
 
 test("validates and restores World Document v1 JSON", async ({ page }) => {
   await page.goto("/world-format");
+  await expect(page.getByRole("heading", { name: "World Document v1" })).toBeVisible();
   await expect(page).toHaveTitle("World format v1 | Axiom Garden");
   await expect(page.getByText("Valid v1 document")).toBeVisible();
   const input = page.getByLabel("World JSON");
@@ -87,6 +98,7 @@ test("validates and restores World Document v1 JSON", async ({ page }) => {
 test("produces and copies canonical World JSON", async ({ context, page }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/world-format");
+  await expect(page.getByRole("heading", { name: "World Document v1" })).toBeVisible();
   const output = page.getByLabel("Read-only canonical JSON");
   await expect(output).toContainText('"format": "axiom-garden/world"');
   await page.getByRole("button", { name: "Copy canonical JSON" }).click();
@@ -235,6 +247,199 @@ test("opens Viewer from Workspace, supports dark theme, and fits mobile", async 
   await page.getByRole("button", { name: "Layers" }).click();
   await expect(page.getByRole("dialog", { name: "Viewer layers" })).toBeVisible();
   await page.keyboard.press("Escape");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("edits an in-memory world with undo, redo, copy, paste, and delete confirmation", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await expect(page.getByRole("heading", { name: "World Editor" })).toBeVisible();
+  await expect(page).toHaveTitle("World editor | Axiom Garden");
+  await expect(page.getByText("Domain valid")).toBeVisible();
+  const canvas = page.getByTestId("editor-canvas");
+  await expect(canvas).toBeVisible();
+
+  await page.getByRole("button", { name: "Place entity" }).click();
+  await canvas.focus();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("4 entities", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("3 entities", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Redo" }).click();
+  await expect(page.getByText("4 entities", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Inspect" }).click();
+  await canvas.focus();
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await page.getByRole("button", { name: "Paste", exact: true }).click();
+  await expect(page.getByText("5 entities", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Duplicate" }).click();
+  await expect(page.getByText("6 entities", { exact: true })).toBeVisible();
+  await page
+    .getByRole("region", { name: "Editor toolbar" })
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Delete selection?" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+  await expect(page.getByText("5 entities", { exact: true })).toBeVisible();
+});
+
+test("edits an Entity draft, places a Cell, previews JSON, resets, and restores with Undo", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  const canvas = page.getByTestId("editor-canvas");
+  await page.getByRole("button", { name: "Inspect" }).click();
+  await canvas.click({ position: await worldPoint(canvas, 2, 1) });
+  await expect(page.getByRole("heading", { name: "Entity inspector" })).toBeVisible();
+
+  await page.getByLabel("Orientation").selectOption("90");
+  await page.getByRole("button", { name: "Add property" }).click();
+  await page.getByLabel("Property 2 key").fill("tone");
+  await page.getByLabel("Property 2 value").fill("quiet");
+  await page.getByRole("button", { name: "Apply entity changes" }).click();
+  await expect(page.getByText("Domain valid")).toBeVisible();
+
+  await page.getByRole("button", { name: "Place cell" }).click();
+  await canvas.click({ position: await worldPoint(canvas, 0, 0) });
+  await expect(page.getByText("3 cells", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Preview JSON" }).click();
+  const preview = page.getByRole("dialog", { name: "Canonical World JSON" });
+  await expect(preview.getByLabel("Canonical World JSON")).toContainText('"tone": "quiet"');
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Reset document" }).click();
+  await page.getByRole("button", { name: "Confirm reset" }).click();
+  await expect(page.getByText("2 cells", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("3 cells", { exact: true })).toBeVisible();
+});
+
+test("creates Symbols and Layers and rejects removal while referenced", async ({ page }) => {
+  await page.goto("/editor");
+  const symbolPanel = page.locator(".editor-left-panel .editor-palette");
+  await symbolPanel.getByRole("button", { name: "New" }).click();
+  const symbolDialog = page.getByRole("dialog", { name: "Create symbol" });
+  await symbolDialog.getByLabel("ID", { exact: true }).fill("symbol:clay-square");
+  await symbolDialog.getByLabel("Name", { exact: true }).fill("Clay square");
+  await symbolDialog.getByRole("combobox").first().selectOption("square");
+  await symbolDialog.getByRole("button", { name: "Create symbol" }).click();
+  await symbolPanel
+    .getByRole("button", { name: "Clay square square · solid", exact: true })
+    .click();
+
+  const layerPanel = page.locator(".editor-right-panel .editor-layers");
+  await layerPanel.getByRole("button", { name: "New" }).click();
+  const layerDialog = page.getByRole("dialog", { name: "Create layer" });
+  await layerDialog.getByLabel("ID", { exact: true }).fill("layer:quiet");
+  await layerDialog.getByLabel("Name", { exact: true }).fill("Quiet");
+  await layerDialog.getByRole("button", { name: "Create layer" }).click();
+  await layerPanel.getByRole("button", { name: /Quiet Order/u }).click();
+
+  const canvas = page.getByTestId("editor-canvas");
+  await page.getByRole("button", { name: "Place entity" }).click();
+  await canvas.click({ position: await worldPoint(canvas, 0, 0) });
+  await symbolPanel.getByRole("button", { name: "Delete active symbol" }).click();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+  await expect(
+    page.getByLabel("Editor validation issues").getByText("symbol_in_use"),
+  ).toBeVisible();
+
+  const quietLayer = layerPanel.getByRole("button", { name: /Quiet Order/u });
+  await quietLayer.locator("xpath=..").getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("button", { name: "Confirm delete" }).click();
+  await expect(page.getByLabel("Editor validation issues").getByText("layer_in_use")).toBeVisible();
+});
+
+test("expands the grid, rejects orphaning shrink, and keeps Engine compatibility", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+  await page.getByRole("button", { name: "Resize grid" }).click();
+  let dialog = page.getByRole("dialog", { name: "Resize bounded grid" });
+  await dialog.getByLabel("Width").fill("16");
+  await dialog.getByLabel("Height").fill("12");
+  await dialog.getByRole("button", { name: "Resize grid" }).click();
+  await expect(page.getByText("Engine compatible")).toBeVisible();
+
+  await page.getByRole("button", { name: "Resize grid" }).click();
+  dialog = page.getByRole("dialog", { name: "Resize bounded grid" });
+  await dialog.getByLabel("Width").fill("2");
+  await dialog.getByLabel("Height").fill("2");
+  await dialog.getByRole("button", { name: "Resize grid" }).click();
+  await expect(page.getByText("resize_would_orphan_objects")).toBeVisible();
+});
+
+test("supports keyboard tools, drag commit, and refresh reset", async ({ page }) => {
+  await page.goto("/editor");
+  const canvas = page.getByTestId("editor-canvas");
+  await canvas.focus();
+  await page.keyboard.press("e");
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("4 entities", { exact: true })).toBeVisible();
+
+  await page.keyboard.press("v");
+  await canvas.focus();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("Enter");
+  const from = await worldPoint(canvas, 0, 0);
+  const to = await worldPoint(canvas, 1, 0);
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+  await page.mouse.move(box.x + from.x, box.y + from.y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + to.x, box.y + to.y, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByTestId("editor-revision")).toHaveText("2");
+
+  const objectsLayer = page
+    .locator(".editor-right-panel .editor-layers")
+    .getByRole("button", { name: /Objects Order/u });
+  await objectsLayer.locator("xpath=..").getByRole("button", { name: "Edit" }).click();
+  const layerDialog = page.getByRole("dialog", { name: "Edit layer" });
+  await layerDialog.getByLabel("Lock layer contents").check();
+  await layerDialog.getByRole("button", { name: "Apply layer changes" }).click();
+  await canvas.scrollIntoViewIfNeeded();
+  const lockedBox = await canvas.boundingBox();
+  expect(lockedBox).not.toBeNull();
+  if (!lockedBox) return;
+  const lockedFrom = await worldPoint(canvas, 1, 0);
+  const lockedTarget = await worldPoint(canvas, 2, 0);
+  await page.mouse.move(lockedBox.x + lockedFrom.x, lockedBox.y + lockedFrom.y);
+  await page.mouse.down();
+  await page.mouse.move(lockedBox.x + lockedTarget.x, lockedBox.y + lockedTarget.y, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByText("locked_layer").first()).toBeVisible();
+  await expect(page.getByTestId("editor-revision")).toHaveText("3");
+
+  await page.reload();
+  await expect(page.getByText("3 entities", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("editor-revision")).toHaveText("0");
+});
+
+test("opens the editor mobile panels and keeps the layout bounded", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/workspace");
+  await page.getByRole("link", { name: "Open in-memory World Editor" }).click();
+  await expect(page).toHaveURL(/\/editor$/u);
+  const inspectorTrigger = page
+    .locator(".editor-mobile-panel-triggers")
+    .getByRole("button", { name: "Inspector" });
+  await inspectorTrigger.scrollIntoViewIfNeeded();
+  await inspectorTrigger.click();
+  await expect(page.getByRole("dialog", { name: "Editor inspector" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );

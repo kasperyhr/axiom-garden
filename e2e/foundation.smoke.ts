@@ -5,6 +5,7 @@ import {
   parseWorldJson,
   REPRESENTATIVE_WORLD_V1,
   serializeWorldDocument,
+  validateWorldDocument,
 } from "../packages/domain/src";
 import {
   computeSimulationDigest,
@@ -26,6 +27,13 @@ import {
   screenToScene,
   sceneToScreen,
 } from "../packages/renderer/src";
+import {
+  applyEditorCommand,
+  computeEditorDocumentDigest,
+  createEditorState,
+  redoEditorCommand,
+  undoEditorCommand,
+} from "../packages/editor/src";
 import { app } from "../apps/worker/src/app";
 
 test.beforeEach(async ({ page }) => {
@@ -49,6 +57,7 @@ test("critical routes exist in the built application shell", async ({ page }) =>
     ["/world-format", "World Document v1"],
     ["/engine", "Engine Playground"],
     ["/viewer", "World Viewer"],
+    ["/editor", "World Editor"],
     ["/missing", "Page not found"],
   ] as const) {
     await page.goto(path);
@@ -132,6 +141,76 @@ test("Renderer scenes, transforms, hit testing, visibility, and commands remain 
   ).toHaveLength(0);
   const first = createDrawCommands(stateScene, viewport, LIGHT_RENDERER_THEME);
   expect(createDrawCommands(stateScene, viewport, LIGHT_RENDERER_THEME)).toEqual(first);
+});
+
+test("Editor commands remain valid, deterministic, and undoable", () => {
+  const initial = createEditorState(REPRESENTATIVE_WORLD_V1);
+  expect(initial.success).toBe(true);
+  if (!initial.success) return;
+  const digest = computeEditorDocumentDigest(initial.data.document);
+  const result = applyEditorCommand(initial.data, {
+    commandId: "command:smoke-add",
+    kind: "add_entity",
+    expectedRevision: 0,
+    entity: {
+      id: "entity:smoke",
+      symbolId: "symbol:moss-circle",
+      layerId: "layer:objects",
+      coordinate: { x: 0, y: 0 },
+      orientation: 0,
+      properties: {},
+    },
+  });
+  expect(result.success).toBe(true);
+  if (!result.success) return;
+  expect(result.data.state.document.entities).toHaveLength(4);
+  const undone = undoEditorCommand(result.data.state);
+  expect(undone.success).toBe(true);
+  if (!undone.success) return;
+  expect(computeEditorDocumentDigest(undone.data.state.document)).toBe(digest);
+
+  const redone = redoEditorCommand(undone.data.state);
+  expect(redone.success).toBe(true);
+  if (!redone.success) return;
+  expect(redone.data.state.document.entities).toHaveLength(4);
+  expect(validateWorldDocument(redone.data.state.document).success).toBe(true);
+
+  const engineState = createInitialSimulationState(redone.data.state.document);
+  expect(engineState.success).toBe(true);
+  if (!engineState.success) return;
+  expect(createRenderSceneFromSimulationState(engineState.data).entities).toHaveLength(4);
+
+  const objectsLayer = redone.data.state.document.layers.find(
+    (layer) => layer.id === "layer:objects",
+  );
+  expect(objectsLayer).toBeDefined();
+  if (!objectsLayer) return;
+  const locked = applyEditorCommand(redone.data.state, {
+    commandId: "command:smoke-lock",
+    kind: "replace_layer",
+    expectedRevision: redone.data.state.revision,
+    layerId: objectsLayer.id,
+    replacement: { ...objectsLayer, locked: true },
+  });
+  expect(locked.success).toBe(true);
+  if (!locked.success) return;
+  const rejected = applyEditorCommand(locked.data.state, {
+    commandId: "command:smoke-locked-add",
+    kind: "add_entity",
+    expectedRevision: locked.data.state.revision,
+    entity: {
+      id: "entity:smoke-locked",
+      symbolId: "symbol:moss-circle",
+      layerId: "layer:objects",
+      coordinate: { x: 1, y: 0 },
+      orientation: 0,
+      properties: {},
+    },
+  });
+  expect(rejected.success).toBe(false);
+  if (!rejected.success) {
+    expect(rejected.issues.some((issue) => issue.code === "locked_layer")).toBe(true);
+  }
 });
 
 test("Worker health remains compatible with the shared schema", async () => {

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@axiom-garden/domain": "workspace:*",
+    "@axiom-garden/editor": "workspace:*",
     "@axiom-garden/engine": "workspace:*",
     "@axiom-garden/protocol": "workspace:*",
     "@axiom-garden/renderer": "workspace:*",

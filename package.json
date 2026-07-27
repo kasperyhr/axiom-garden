@@ -19,6 +19,8 @@
     "test:domain": "pnpm --filter @axiom-garden/domain test",
     "test:engine": "pnpm --filter @axiom-garden/engine test",
     "benchmark:engine": "pnpm --filter @axiom-garden/engine benchmark",
+    "test:editor": "pnpm --filter @axiom-garden/editor test",
+    "benchmark:editor": "pnpm --filter @axiom-garden/editor benchmark && pnpm --filter @axiom-garden/domain exec tsx ../../scripts/benchmark-editor-integration.ts",
     "test:renderer": "pnpm --filter @axiom-garden/renderer test",
     "benchmark:renderer": "pnpm --filter @axiom-garden/renderer benchmark",
     "test:ui": "pnpm --filter @axiom-garden/ui test",

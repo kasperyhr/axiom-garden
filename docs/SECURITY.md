@@ -58,6 +58,17 @@ World Format Lab 只接收粘贴到 textarea 的 JSON 文本；不使用 `eval`�
 - hit testing 使用坐标桶与可见图层过滤，不执行 properties、不扫描网络、不创建持久状态。
 - Renderer 的 `rs1:` scene key 用于确定性缓存与测试，不是密码学完整性证明。
 
+### Editor v1 命令与历史边界
+
+- Editor 接受 strict runtime-validated 的有限纯数据 command；拒绝 callback、class instance、循环引用、危险 property key 与非有限数值。
+- 每个候选文档在提交前重新执行 Domain validation 与 normalization；失败命令原子拒绝，不增加 revision、不写 Undo。
+- batch 最多 100 条且禁止嵌套；Undo 历史最多 100 条快照，控制内存增长。
+- locked layer 拒绝 Entity/Cell 的添加、删除、替换和移动；删除被引用 Symbol 或非空 Layer 均拒绝，不做级联。
+- 内部 clipboard 不解析系统剪贴板；Entity/Cell paste 必须显式提供新 ID、坐标和 layer。系统 clipboard 仅接收 canonical JSON 文本。
+- properties 表单只生成 Domain 允许的 scalar 与一维数组，不接受 object、任意 CSS、SVG、URL 或代码。
+- `agd1:` 是 canonical World JSON 上的非密码学一致性摘要，不用于认证或防篡改。
+- Editor 页面不上传、不联网、不保存 world；刷新恢复内置 representative world。
+
 - 使用固定版本和提交的 `pnpm-lock.yaml`。
 - CI 使用 frozen lockfile。
 - 新依赖需说明用途、维护状态、许可证和替代方案。

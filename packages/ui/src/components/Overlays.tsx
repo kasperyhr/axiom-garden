@@ -58,7 +58,7 @@ export function Popover({
 }
 
 export interface DialogProps {
-  readonly trigger: ReactNode;
+  readonly trigger?: ReactNode;
   readonly title: string;
   readonly description: string;
   readonly children: ReactNode;
@@ -72,7 +72,7 @@ export function Dialog({ children, description, onOpenChange, open, title, trigg
       {...(open === undefined ? {} : { open })}
       {...(onOpenChange ? { onOpenChange } : {})}
     >
-      <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
+      {trigger ? <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger> : null}
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="ag-dialog__overlay" />
         <DialogPrimitive.Content className="ag-dialog__content">

@@ -53,6 +53,16 @@ Axiom Garden 以 **WCAG 2.2 AA** 为产品目标。优先采用原生 HTML 语�
 - 移动端 Layers 与 Inspector 使用既有可访问 Dialog；主要工具栏控制维持接近 44×44 CSS px 的触控目标。
 - axe 覆盖 Viewer 初始、Entity selection、移动端 Inspector 与 dark theme；pointer pinch 数学由无 DOM 单元测试验证，并保留人工触控验收。
 
+## Milestone 6 Canvas 编辑模型
+
+- `V/H/E/C` 切换 Inspect、Pan、Place Entity、Place Cell；工具按钮使用 `aria-pressed`，active tool/symbol/layer 有文本与隐藏摘要。
+- Ctrl/Cmd+Z、Ctrl/Cmd+Shift+Z 或 Ctrl/Cmd+Y 管理编辑历史；Ctrl/Cmd+C/V 操作内部 clipboard；文本输入聚焦时不劫持快捷键。
+- Place、move、locked-layer rejection、Undo/Redo 与 validation issue 通过 `aria-live="polite"` 或 Toast 反馈；hover 不播报。
+- Delete/Backspace 只在非文本焦点触发，并打开可访问确认 Dialog。Dialog 保持 focus trap、Escape 与触发器焦点返回。
+- Inspector、Symbol、Layer、metadata 与 grid 使用完整 label 的受控 draft；Apply 仅提交一次 command，Cancel 不写历史。
+- 390px 下 Canvas 保持主区域，Tools/Symbols、Layers 与 Inspector 使用可滚动 Dialog，显式按钮维持约 44px 触控目标。
+- axe 覆盖 Editor 初始、selection/删除确认、移动 tools Dialog 与 dark theme；人工继续验证 drag preview、locked 拒绝和屏幕阅读器公告。
+
 ## 人工检查
 
 自动工具不能替代人工测试。每次视觉或交互变更至少复核：

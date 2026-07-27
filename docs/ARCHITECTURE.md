@@ -1,6 +1,6 @@
 # 架构
 
-## 当前架构（Milestone 5）
+## 当前架构（Milestone 6）
 
 - `apps/web`：React/Vite 客户端，负责路由、App Shell、页面组合与健康状态展示。
 - `apps/worker`：Hono Cloudflare Worker，仅提供 `/api/health`。
@@ -9,6 +9,7 @@
 - `packages/domain`：无框架依赖的 World Document v1 schema、验证、规范化、规范序列化与迁移。
 - `packages/engine`：依赖 Domain 的纯 TypeScript 确定性模拟内核；包含 canonical state、纯数据 TransitionPlan、原子提交、receipt、snapshot 与稳定摘要。
 - `packages/renderer`：依赖 Domain 与 Engine 公开只读类型的纯 TypeScript 渲染内核；包含 RenderScene、viewport、drawing commands、Canvas 适配和 hit testing。
+- `packages/editor`：只依赖 Domain 的纯 TypeScript 编辑内核；包含 EditorState、strict command、selection、clipboard、history 与文档摘要。
 - `packages/config-*`：共享工程配置，不包含产品逻辑。
 - `e2e`：真实浏览器 E2E、axe 与 smoke 测试。
 
@@ -20,6 +21,8 @@ flowchart LR
   Web --> Domain["packages/domain<br/>World Document v1"]
   Web --> Engine["packages/engine<br/>确定性执行内核"]
   Web --> Renderer["packages/renderer<br/>Canvas 2D 渲染内核"]
+  Web --> Editor["packages/editor<br/>纯数据编辑内核"]
+  Editor --> Domain
   Renderer --> Engine
   Renderer --> Domain
   Engine --> Domain
@@ -38,6 +41,7 @@ App Shell 是 Web 的持久外框，包含 Top Bar、品牌、区域标题、主
 - `/world-format`：lazy-loaded World Document v1 验证实验室。
 - `/engine`：lazy-loaded Engine Playground，只执行内置的纯数据 TransitionPlan。
 - `/viewer`：lazy-loaded World Viewer，只呈现内置 world/state，不修改任何领域数据。
+- `/editor`：lazy-loaded World Editor，仅修改 representative world 的内存副本。
 - `*`：lazy-loaded Not Found。
 
 非首页页面按路由拆分，避免进入首页初始 chunk。`/components` 保留在生产构建中，作为无额外服务的设计系统人工验收入口。
@@ -51,10 +55,11 @@ App Shell 是 Web 的持久外框，包含 Top Bar、品牌、区域标题、主
 ## apps 与 packages 边界
 
 - `apps` 是可运行入口，可以依赖 `packages`；`packages` 不得依赖任何 `apps`。
-- Web 可依赖 UI、Protocol、Domain、Engine 与 Renderer，但不得导入 Worker 内部实现。
+- Web 可依赖 UI、Protocol、Domain、Engine、Renderer 与 Editor，但不得导入 Worker 内部实现。
 - Worker 当前只依赖 Protocol，不依赖 Web、UI、Domain 或 Engine。
 - Engine 只依赖 Domain 和轻量纯 TypeScript 依赖，不依赖 React、UI、Web、Worker、Protocol 或 Cloudflare runtime。
 - Renderer 只依赖 Domain 与 Engine 的公开只读边界，不依赖 React、DOM、UI、Web、Worker、Protocol 或 Cloudflare runtime。
+- Editor 只依赖 Domain，不依赖 Engine、Renderer、React、DOM、UI、Web、Worker、Protocol 或 Cloudflare runtime。
 - Domain 不依赖 Engine、Protocol、UI、React、Worker、Web 或 Cloudflare runtime。
 - UI 不依赖 Domain 或 Engine，也不重新导出领域类型。
 - Protocol 只容纳跨网络边界契约，不容纳 UI、执行器或领域占位类型。
@@ -68,6 +73,8 @@ flowchart TD
   Web --> Domain["packages/domain"]
   Web --> Engine["packages/engine"]
   Web --> Renderer["packages/renderer"]
+  Web --> Editor["packages/editor"]
+  Editor --> Domain
   Renderer --> Engine
   Renderer --> Domain
   Engine --> Domain
@@ -81,6 +88,7 @@ flowchart TD
 - `packages/domain → Engine | Protocol | UI | apps`
 - `packages/engine → UI | Web | Worker | Protocol | React | Hono | Cloudflare runtime`
 - `packages/renderer → UI | Web | Worker | Protocol | React | DOM | Cloudflare runtime`
+- `packages/editor → Engine | Renderer | UI | Web | Worker | Protocol | React | DOM | Cloudflare runtime`
 - `apps/worker → apps/web | packages/ui`
 - `apps/web → apps/worker` 内部实现
 
@@ -179,4 +187,25 @@ flowchart LR
 
 Web 负责 Pointer Events、键盘、ResizeObserver、requestAnimationFrame 合并调度与面板状态；Renderer 负责坐标转换、可视范围、几何、绘制顺序和命中规则。`Map` 等派生索引不进入可持久化数据，图层临时可见性覆盖也不修改 World 或 Engine state。完整契约见 `docs/renderer/RENDERER_V1.md`。
 
-允许的核心方向为 `Domain → Engine → Renderer → Web`。Renderer 只观察 Engine，不生成 TransitionPlan；Milestone 5 的 selection、hover、pan、zoom 和 layer override 均为临时 Viewer 状态，不是领域写操作。
+允许的核心方向为 `Domain → Engine → Renderer → Web` 与 `Domain → Editor → Web`。Renderer 只观察 Engine；Editor 只产出经过 Domain 再验证的 World Document，不生成 TransitionPlan。
+
+## Editor 命令与 Web 集成
+
+EditorState 保存 canonical World Document、selection、active layer/tool、内存 clipboard、revision 与最多 100 条快照历史。只有文档命令增加 revision；selection、tool、clipboard 和 Web viewport 不进入文档历史。
+
+```mermaid
+flowchart LR
+  Input["Web 受控表单 / Canvas 事件"] --> Command["strict EditorCommand 纯数据"]
+  Command --> Runtime["runtime schema + expectedRevision"]
+  Runtime --> Candidate["构建候选 World Document"]
+  Candidate --> DomainCheck["Domain validation + normalization"]
+  DomainCheck -->|"失败"| Issue["稳定 EditorIssue[]<br/>原状态不变"]
+  DomainCheck -->|"成功"| Commit["原子 commit + revision + 1"]
+  Commit --> History["Undo snapshot / clear redo"]
+  Commit --> Receipt["EditorReceipt + agd1 digest"]
+  Commit --> WebProjection["Web 投影"]
+  WebProjection --> Renderer["RenderScene / Canvas"]
+  WebProjection --> Engine["tick 0 compatibility only"]
+```
+
+拖动过程只更新 Web 的 ephemeral preview，pointer up 才提交一次 `MoveEntityCommand`。Editor clipboard 只保存 Entity/Cell 的防御性纯数据副本；系统 clipboard 仅用于 canonical JSON 文本。Undo/Redo 是编辑历史，不是 Engine replay；完整约束见 `docs/editor/EDITOR_V1.md`。

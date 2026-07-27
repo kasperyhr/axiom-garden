@@ -21,6 +21,7 @@ for (const [path, title] of [
   ["/world-format", "World format v1 | Axiom Garden"],
   ["/engine", "Engine playground | Axiom Garden"],
   ["/viewer", "World viewer | Axiom Garden"],
+  ["/editor", "World editor | Axiom Garden"],
   ["/missing", "Page not found | Axiom Garden"],
 ] as const) {
   test(`axe scan passes for ${path}`, async ({ page }) => {
@@ -91,5 +92,61 @@ test("axe scan passes for the mobile Viewer panels in dark theme", async ({ page
   await page.getByRole("menuitem", { name: "Dark" }).click();
   await page.getByRole("button", { name: "Inspector" }).click();
   await expect(page.getByRole("dialog", { name: "Viewer inspector" })).toBeVisible();
+  await expectNoA11yViolations(page);
+});
+
+test("axe scan passes for Editor selection and confirmation dialog", async ({ page }) => {
+  await page.goto("/editor");
+  const canvas = page.getByTestId("editor-canvas");
+  await canvas.focus();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Entity inspector" })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.getByLabel("Property 1 key").fill("__proto__");
+  await page.getByRole("button", { name: "Apply entity changes" }).click();
+  await expect(
+    page.getByLabel("Editor validation issues").getByText("invalid_command"),
+  ).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page
+    .getByRole("region", { name: "Editor toolbar" })
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  await expect(page.getByRole("dialog", { name: "Delete selection?" })).toBeVisible();
+  await expectNoA11yViolations(page);
+});
+
+test("axe scan passes for Editor creation and JSON preview dialogs", async ({ page }) => {
+  await page.goto("/editor");
+  await expect(page.getByRole("heading", { name: "World Editor" })).toBeVisible();
+
+  const symbolPanel = page.locator(".editor-left-panel .editor-palette");
+  await symbolPanel.getByRole("button", { name: "New" }).click();
+  await expect(page.getByRole("dialog", { name: "Create symbol" })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.keyboard.press("Escape");
+
+  const layerPanel = page.locator(".editor-right-panel .editor-layers");
+  await layerPanel.getByRole("button", { name: "New" }).click();
+  await expect(page.getByRole("dialog", { name: "Create layer" })).toBeVisible();
+  await expectNoA11yViolations(page);
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Preview JSON" }).click();
+  await expect(page.getByRole("dialog", { name: "Canonical World JSON" })).toBeVisible();
+  await expectNoA11yViolations(page);
+});
+
+test("axe scan passes for the mobile Editor panels in dark theme", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/editor");
+  await page.getByRole("button", { name: /Theme:/u }).click();
+  await page.getByRole("menuitem", { name: "Dark" }).click();
+  await page.getByRole("button", { name: "Tools & symbols" }).click();
+  await expect(page.getByRole("dialog", { name: "Editor tools and symbols" })).toBeVisible();
   await expectNoA11yViolations(page);
 });

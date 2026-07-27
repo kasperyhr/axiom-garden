@@ -44,6 +44,11 @@ function InspectorContent() {
         </Link>
       </p>
       <p>
+        <Link className="app-inline-link" to="/editor">
+          Open World Editor
+        </Link>
+      </p>
+      <p>
         <Link className="app-inline-link" to="/viewer">
           Open World Viewer
         </Link>
@@ -77,10 +82,13 @@ export default function WorkspacePage() {
           <p className="eyebrow">Layout validation</p>
           <h1>Workspace shell preview</h1>
           <p>
-            A responsive shell with a lightweight read-only renderer preview. Editing, rules, and
-            world modification remain unavailable.
+            A responsive shell with a lightweight read-only renderer preview and a direct path to
+            the in-memory World Editor. This preview itself remains non-interactive.
           </p>
           <p className="workspace-page__links">
+            <Link className="app-link app-link--primary" to="/editor">
+              Open in-memory World Editor
+            </Link>
             <Link className="app-link app-link--primary" to="/viewer">
               Open interactive World Viewer
             </Link>
@@ -126,7 +134,9 @@ export default function WorkspacePage() {
           <div aria-hidden="true" className="workspace-renderer-preview">
             <GeometricInstrument />
           </div>
-          <p className="canvas-placeholder__note">Renderer available · Editing unavailable</p>
+          <p className="canvas-placeholder__note">
+            Editor available at /editor · This preview remains read-only
+          </p>
         </Panel>
 
         <Panel className="desktop-inspector">
@@ -138,7 +148,7 @@ export default function WorkspacePage() {
           <span>No world document loaded</span>
           <span>Format: axiom-garden/world v1</span>
           <span>Engine core available · No rule system</span>
-          <span>Renderer available · Editing unavailable</span>
+          <span>Editor available · In-memory only</span>
           <span className="workspace-status__readonly">
             <Info aria-hidden="true" />
             Read-only preview

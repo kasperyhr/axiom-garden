@@ -27,6 +27,7 @@ function areaTitle(pathname: string): string {
   if (pathname === "/world-format") return "World format v1";
   if (pathname === "/engine") return "Engine playground";
   if (pathname === "/viewer") return "World viewer";
+  if (pathname === "/editor") return "World editor";
   return "Page not found";
 }
 
@@ -77,12 +78,12 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             description="A local guide to the current product shell."
           >
             <p>
-              Milestone 5 adds a read-only Canvas 2D renderer for validated world and simulation
-              state data.
+              Milestone 6 adds deterministic in-memory world editing on top of the validated Domain
+              and read-only Renderer boundaries.
             </p>
             <p>
-              Editing, rules, automatic transition generation, file upload, persistence, and
-              playback remain intentionally unavailable.
+              Rules, automatic transition generation, file upload, persistence, and playback remain
+              intentionally unavailable.
             </p>
             <NavLink className="app-link app-link--secondary" to="/world-format">
               Open World Format Lab
@@ -92,6 +93,9 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             </NavLink>
             <NavLink className="app-link app-link--secondary" to="/viewer">
               Open World Viewer
+            </NavLink>
+            <NavLink className="app-link app-link--secondary" to="/editor">
+              Open World Editor
             </NavLink>
           </Dialog>
         </div>

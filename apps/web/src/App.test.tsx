@@ -178,6 +178,45 @@ describe("Axiom Garden app shell", () => {
     expect(screen.getByTestId("viewer-tick")).toHaveTextContent("0");
   });
 
+  it("edits the in-memory world through validated commands and history", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    renderApp("/editor");
+
+    expect(
+      await screen.findByRole("heading", { name: "World Editor" }, { timeout: 5_000 }),
+    ).toBeVisible();
+    await waitFor(() => {
+      expect(document.title).toBe("World editor | Axiom Garden");
+    });
+    expect(screen.getByText("Milestone 6 · In-memory editing")).toBeVisible();
+    expect(screen.getByText("Domain valid")).toBeVisible();
+    expect(screen.getByText("Engine compatible")).toBeVisible();
+
+    const initialEntityCount = Number(
+      screen.getByText(/^\d+ entities$/u).textContent?.split(" ")[0],
+    );
+    await user.click(screen.getByRole("button", { name: "Place entity" }));
+    const canvas = screen.getByTestId("editor-canvas");
+    canvas.focus();
+    await user.keyboard("{End}{Enter}");
+    expect(screen.getByText(`${initialEntityCount + 1} entities`)).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.getByText(`${initialEntityCount} entities`)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Redo" }));
+    expect(screen.getByText(`${initialEntityCount + 1} entities`)).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Preview JSON" }));
+    expect(screen.getByRole("dialog", { name: "Canonical World JSON" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Copy canonical JSON" }));
+    expect(writeText).toHaveBeenCalledOnce();
+  });
+
   it("renders Not Found and returns to Home", async () => {
     pendingHealth();
     const user = userEvent.setup();
